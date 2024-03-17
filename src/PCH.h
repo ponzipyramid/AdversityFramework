@@ -92,6 +92,10 @@ namespace util
 
 #include "Plugin.h"
 
+#include <functional>
+#include <future>
+#include <vector>
+
 #include <ClibUtil/distribution.hpp>
 #include <ClibUtil/editorID.hpp>
 #include <ClibUtil/numeric.hpp>
@@ -101,10 +105,22 @@ namespace util
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
+#include <yaml-cpp/yaml.h>
+
+
 #include <magic_enum.hpp>
 
 #include "SimpleMath.h"
 
 using uint = uint32_t;
+
+namespace Adversity::Papyrus
+{
+#define REGISTERFUNC(func, classname) a_vm->RegisterFunction(#func##sv, classname, func);
+#define REGISTERFUNCND(func, classname) a_vm->RegisterFunction(#func##sv, classname, func, true);
+
+	using VM = RE::BSScript::IVirtualMachine;
+	using StackID = RE::VMStackID;
+}
 
 #define DLLEXPORT __declspec(dllexport)
