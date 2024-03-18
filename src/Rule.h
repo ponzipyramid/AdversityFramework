@@ -16,13 +16,28 @@ namespace Adversity
 
 	class Rule
 	{
+	public:
+		inline void SetPackId(std::string a_pack) {
+			if (_id.empty()) {
+				_packId = a_pack;
+				_id = std::format("{}/{}", a_pack, _name);
+			}
+		}
+		inline std::string GetPackId() { return _packId; }
+		inline std::string GetName() { return _name; }
+		inline std::string GetDesc() { return _desc; }
+		inline std::string GetId() { return _id; }
+		inline bool HasContext(std::string a_context) { return _contexts.contains(a_context); }
 	private:
+		std::string _id;
+		std::string _packId;
 		std::string _name;
 		RE::TESGlobal* _global;
 		std::string _desc;
 		int _severity;
 		std::unordered_set<std::string> _tags;
 		std::vector<Conflict> _conflicts;
+		std::unordered_set<std::string> _contexts;
 
 		friend struct YAML::convert<Rule>;
 	};

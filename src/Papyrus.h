@@ -1,6 +1,7 @@
 #pragma once
 #include "Packs.h"
 #include "Util.h"
+#include "Willpower.h"
 
 namespace Adversity::Papyrus
 {
@@ -23,26 +24,45 @@ namespace Adversity::Papyrus
 
 	float GetWillpower(RE::StaticFunctionTag*)
 	{
-		return Util::GetWillpower();
+		return Willpower::GetWillpower();
 	}
 
 	bool IsWillpowerLow(RE::StaticFunctionTag*)
 	{
-		return Util::IsWillpowerLow();
+		return Willpower::IsWillpowerLow();
 	}
 
 	bool IsWillpowerHigh(RE::StaticFunctionTag*)
 	{
-		return Util::IsWillpowerHigh();
+		return Willpower::IsWillpowerHigh();
 	}
 
+	float GetResistance(RE::StaticFunctionTag*)
+	{
+		return Willpower::GetResistance();
+	}
+
+	void ModResistance(RE::StaticFunctionTag*, float a_delta)
+	{
+		Willpower::ModResistance(a_delta);
+	}
 
 	inline bool RegisterFuncs(VM* a_vm)
 	{
+		// context
 		REGISTERFUNC(SwitchDialogueContexts, className)
+		
+		// rules
+
+
+		// util
 		REGISTERFUNC(InternalMessageBox, className)
 		REGISTERFUNC(GetMessageBoxValue, className)
+
+		// willpower 
 		REGISTERFUNC(GetWillpower, className)
+		REGISTERFUNC(GetResistance, className)
+		REGISTERFUNC(ModResistance, className)
 		REGISTERFUNC(IsWillpowerLow, className)
 		REGISTERFUNC(IsWillpowerHigh, className)
 

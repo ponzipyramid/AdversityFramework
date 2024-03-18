@@ -1,5 +1,6 @@
 #include "Papyrus.h"
 #include "Packs.h"
+#include "Willpower.h"
 
 using namespace Adversity;
 
@@ -31,6 +32,7 @@ void Listener(SKSE::MessagingInterface::Message* message) noexcept
 {
 	if (message->type == SKSE::MessagingInterface::kDataLoaded) {
 		Packs::Init();
+		Willpower::Init();
 	}
 }
 
