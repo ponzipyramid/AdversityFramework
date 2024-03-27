@@ -1,4 +1,5 @@
 #include "Packs.h"
+#include "Rules.h"
 
 using namespace Adversity;
 
@@ -6,13 +7,19 @@ namespace
 {
 	constexpr std::string_view ext1 = ".yaml";
 	constexpr std::string_view ext2 = ".yml";
-	constexpr std::string_view dir = "Data/SKSE/AdversityFramework/Packs";
 }
 
-void Packs::Init()
+void Packs::Load(std::string a_path, std::string a_context)
 {
-	for (const auto& a : std::filesystem::directory_iterator(dir)) {
-		if (std::filesystem::is_directory(a)) {
+	std::string dir{ std::format("{}/Packs", a_path, a_context) };
+
+	if (!fs::is_directory(dir)) {
+		logger::warn("{} has no packs directory", a_context);
+		return;
+	}
+
+	for (const auto& a : fs::directory_iterator(dir)) {
+		if (fs::is_directory(a)) {
 			continue;
 		}
 
@@ -21,69 +28,47 @@ void Packs::Init()
 			continue;
 
 		const auto path{ a.path().string() };
-		const auto id{ a.path().filename().replace_extension().string() };
+		const auto filename{ a.path().filename().replace_extension().string() };
 
 		try {
-			logger::info("file: {}", path);
-
 			auto packFile = YAML::LoadFile(path);
-			auto pack = packFile.as<Pack>();
-			pack.SetId(id);
-			_packs.push_back(pack);
-			_packsById[id] = &pack;
+			auto temp = packFile.as<Pack>();
+			temp.Init(a_context);
 
-			for (auto& rule : pack.rules) {
-				rule.SetPackId(id);
-				_rules[rule.GetId()] = &rule;
-			}
+			const auto id = temp.GetId();
 
-			logger::info("loaded pack {} successfully", id);
+			_packs.insert({ id, temp });
+
+			auto pack = _packs[id];
+
+			_contexts[a_context].push_back(&pack);
+
+			Rules::Load(a_context, id, pack.rules);
+
+			logger::info("loaded pack {} successfully", filename);
 
 		} catch (const std::exception& e) {
-			logger::error("failed to load pack {}: {}", path, e.what());
+			logger::error("failed to load pack {}: {}", filename, e.what());
 		} catch (...) {
-			logger::error("failed to load pack {}", path);
+			logger::error("failed to load pack {}", filename);
 		}
 	}
 }
 
-void Packs::SwitchDialogueContexts(std::string a_context)
-{
-	for (const auto& [name, globals] : _contexts) {
-		if (name == a_context) {
-			for (const auto& global : globals) {
-				global->value = 1.0f;
-			}
-		} else {
-			for (const auto& global : globals) {
-				global->value = 0.0f;
-			}
-		}
-	}
+Pack* Packs::GetById(std::string a_pack) {
+	return _packs.count(a_pack) ? &_packs[a_pack] : nullptr;
 }
 
 
-std::string Packs::GetRulePack(std::string a_rule)
+std::vector<Pack*> Packs::GetByContext(std::string a_context)
 {
-	return _rules.count(a_rule) ? _rules[a_rule]->GetPackId() : "";
+	return _contexts[a_context];
 }
-std::string Packs::GetRuleName(std::string a_rule)
-{
-	return _rules.count(a_rule) ? _rules[a_rule]->GetName() : "";
-}
-std::string Packs::GetRuleDesc(std::string a_rule)
-{
-	return _rules.count(a_rule) ? _rules[a_rule]->GetDesc() : "";
-}
-bool Packs::RuleHasContext(std::string a_rule, std::string a_context)
-{
-	return _rules.count(a_rule) ? _rules[a_rule]->HasContext(a_context) : false;
-}
-RE::TESQuest* Packs::GetPackQuest(std::string a_pack)
-{
-	if (auto pack = _packsById[a_pack]) {
-		return pack->GetQuest();
-	}
 
-	return nullptr;
+std::vector<std::string> Packs::GetIds(std::vector<Pack*> a_packs)
+{
+	std::vector<std::string> ids;
+	for (auto pack : a_packs)
+		ids.push_back(pack->GetId());
+	return ids;
 }

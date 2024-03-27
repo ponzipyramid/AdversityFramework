@@ -95,6 +95,7 @@ namespace util
 #include <functional>
 #include <future>
 #include <vector>
+#include <random>
 
 #include <ClibUtil/distribution.hpp>
 #include <ClibUtil/editorID.hpp>
@@ -107,17 +108,18 @@ using json = nlohmann::json;
 
 #include <yaml-cpp/yaml.h>
 
-
 #include <magic_enum.hpp>
 
 #include "SimpleMath.h"
 
 using uint = uint32_t;
 
+namespace fs = std::filesystem;
+
 namespace Adversity::Papyrus
 {
-#define REGISTERFUNC(func, classname) a_vm->RegisterFunction(#func##sv, classname, func);
-#define REGISTERFUNCND(func, classname) a_vm->RegisterFunction(#func##sv, classname, func, true);
+#define REGISTERFUNC(func) a_vm->RegisterFunction(#func##sv, "AdversityFramework", func);
+#define REGISTERFUNCND(func) a_vm->RegisterFunction(#func##sv, "AdversityFramework", func, true);
 
 	using VM = RE::BSScript::IVirtualMachine;
 	using StackID = RE::VMStackID;

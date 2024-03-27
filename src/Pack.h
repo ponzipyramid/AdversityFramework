@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Rule.h"
+#include "Util.h"
 
 namespace Adversity
 {
@@ -14,14 +15,20 @@ namespace Adversity
 	class Pack
 	{
 	public:
-		inline void SetId(std::string a_id) { _id = _id.empty() ? a_id : _id; }
+		inline void Init(std::string a_context) {
+			if (_context.empty()) {
+				_context = a_context;
+				_id = std::format("{}/{}", _context, Util::Lower(_name)); 
+			}
+		}
 		inline RE::TESQuest* GetQuest() { return _quest; }
+		inline std::string GetId() { return _id; }
 		std::vector<Rule> rules;
 	private:
 		std::string _id;
 		std::string _name;
 		RE::TESQuest* _quest;
-		std::unordered_map<std::string, ContextSpec> _contexts;
+		std::string _context;
 
 		friend struct YAML::convert<Pack>;
 	};
@@ -52,15 +59,10 @@ namespace YAML
 
 			auto questEdid = node["quest"].as<std::string>();
 			rhs._quest = RE::TESForm::LookupByEditorID<RE::TESQuest>(questEdid);
-
-			auto contexts = node["contexts"].as<std::vector<ContextSpec>>();
-			for (const auto context : contexts) {
-				rhs._contexts[context.name] = context;
-			}
-
+			
 			rhs.rules = node["rules"].as<std::vector<Rule>>();
 
-			return !rhs._name.empty() && rhs._quest && !rhs._contexts.empty() && !rhs.rules.empty();
+			return !rhs._name.empty() && rhs._quest && !rhs.rules.empty();
 		}
 	};
 }

@@ -8,17 +8,31 @@ namespace Adversity
 		{
 			Unknown,
 			Wear,
+			Naked,
 		};
 
 		Type type;
 		std::unordered_set<int> slots;
+		bool With(Conflict a_other);
 	};
 
 	class Rule
 	{
 	public:
-		inline void SetPackId(std::string a_pack) {
+		enum Status
+		{
+			Disabled,
+			Inactive,
+			Reserved,
+			Selected,
+			Active
+		};
+
+		inline void Init(std::string a_context, std::string a_pack) {
 			if (_id.empty()) {
+				_context = a_context;
+				
+				// pack id alr contains context
 				_packId = a_pack;
 				_id = std::format("{}/{}", a_pack, _name);
 			}
@@ -26,8 +40,15 @@ namespace Adversity
 		inline std::string GetPackId() { return _packId; }
 		inline std::string GetName() { return _name; }
 		inline std::string GetDesc() { return _desc; }
+		inline std::vector<std::string> GetTags() { return std::vector<std::string>{ _tags.begin(), _tags.end() }; }
 		inline std::string GetId() { return _id; }
-		inline bool HasContext(std::string a_context) { return _contexts.contains(a_context); }
+		inline std::string GetContext() { return _context; }
+		inline int GetSeverity() { return _severity; }
+		inline Status GetStatus() { return static_cast<Status>(_global->value); }
+		inline void SetStatus(Status a_status) { _global->value = (float) a_status; }
+		bool HasTags(std::vector<std::string> a_tags, bool a_all);
+		bool HasTag(std::string a_tag);
+		bool Conflicts(Rule* a_rule);
 	private:
 		std::string _id;
 		std::string _packId;
@@ -37,7 +58,8 @@ namespace Adversity
 		int _severity;
 		std::unordered_set<std::string> _tags;
 		std::vector<Conflict> _conflicts;
-		std::unordered_set<std::string> _contexts;
+		std::string _context;
+		std::unordered_set<std::string> _excludes;
 
 		friend struct YAML::convert<Rule>;
 	};
@@ -75,6 +97,8 @@ namespace YAML
 			const auto globalEdid = node["global"].as<std::string>();
 			rhs._global = RE::TESForm::LookupByEditorID<RE::TESGlobal>(globalEdid);
 
+			const auto excludes = node["excludes"].as<std::vector<std::string>>();
+			rhs._excludes = std::unordered_set<std::string>{ excludes.begin(), excludes.end() };
 			return !rhs._name.empty() && rhs._severity >= 0 && rhs._global;
 		}
 	};

@@ -6,23 +6,26 @@ namespace Adversity
 	class Util
 	{
 	public:
-		static inline void ShowMessageBox(std::string a_msg, std::vector<std::string> a_options)
-		{
-			_selected = -1;
-			UI::MessageBox::Show(a_msg, a_options, [](unsigned int a_index) {
-				_selected = a_index;
-			});
-		}
-		static inline int GetMessageBoxValue()
-		{
-			return _selected;
-		}
 		template <typename T>
 		static inline T* GetFormById(RE::FormID a_id)
 		{
 			return RE::TESDataHandler::GetSingleton()->LookupForm<T>(a_id, "Adversity Framework.esm");
 		}
-	private:
-		static inline int _selected;
+		static inline int GetWeightedIndex(std::vector<int> a_weights)
+		{
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::discrete_distribution<int> d{ a_weights.begin(), a_weights.end() };
+
+			return d(gen);
+		}
+		static inline std::string Lower(std::string a_str)
+		{
+			std::string data{ a_str };
+			std::transform(data.begin(), data.end(), data.begin(),
+				[](unsigned char c) { return (char)std::tolower(c); });
+
+			return data;
+		}
 	};
 }

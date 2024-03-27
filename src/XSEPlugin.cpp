@@ -1,5 +1,5 @@
 #include "Papyrus.h"
-#include "Packs.h"
+#include "Contexts.h"
 #include "Willpower.h"
 
 using namespace Adversity;
@@ -31,8 +31,8 @@ void InitializeLog([[maybe_unused]] spdlog::level::level_enum a_level = spdlog::
 void Listener(SKSE::MessagingInterface::Message* message) noexcept
 {
 	if (message->type == SKSE::MessagingInterface::kDataLoaded) {
-		Packs::Init();
 		Willpower::Init();
+		Contexts::Init();
 	}
 }
 
