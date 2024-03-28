@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Util.h"
+
 namespace Adversity
 {
 	struct Conflict
@@ -34,7 +36,7 @@ namespace Adversity
 				
 				// pack id alr contains context
 				_packId = a_pack;
-				_id = std::format("{}/{}", a_pack, _name);
+				_id = std::format("{}/{}", a_pack, Util::Lower(_name));
 			}
 		}
 		inline std::string GetPackId() { return _packId; }
@@ -53,7 +55,7 @@ namespace Adversity
 		std::string _id;
 		std::string _packId;
 		std::string _name;
-		RE::TESGlobal* _global;
+		RE::TESGlobal* _global = nullptr;
 		std::string _desc;
 		int _severity;
 		std::unordered_set<std::string> _tags;
@@ -97,7 +99,7 @@ namespace YAML
 			const auto globalEdid = node["global"].as<std::string>();
 			rhs._global = RE::TESForm::LookupByEditorID<RE::TESGlobal>(globalEdid);
 
-			const auto excludes = node["excludes"].as<std::vector<std::string>>();
+			const auto excludes = node["excludes"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs._excludes = std::unordered_set<std::string>{ excludes.begin(), excludes.end() };
 			return !rhs._name.empty() && rhs._severity >= 0 && rhs._global;
 		}

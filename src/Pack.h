@@ -23,6 +23,7 @@ namespace Adversity
 		}
 		inline RE::TESQuest* GetQuest() { return _quest; }
 		inline std::string GetId() { return _id; }
+		inline std::string GetName() { return _name; }
 		std::vector<Rule> rules;
 	private:
 		std::string _id;

@@ -1,5 +1,6 @@
 #include "Rules.h"
 #include "Config.h"
+#include "Util.h"
 
 using namespace Adversity;
 
@@ -7,13 +8,19 @@ void Rules::Load(std::string a_context, std::string a_pack, std::vector<Rule>& a
 {
 	for (auto& rule : a_rules) {
 		rule.Init(a_context, a_pack);
-		_rules[rule.GetId()] = &rule;
+		_rules[rule.GetId()] = rule;
+
+		auto& ref = _rules[rule.GetId()];
+
+		_contexts[a_context].push_back(&ref);
+		_packs[a_pack].push_back(&ref);
 	}
 }
 
 Rule* Rules::GetById(std::string a_id)
 {
-	return _rules.count(a_id) ? _rules[a_id] : nullptr;
+	a_id = Util::Lower(a_id);
+	return _rules.count(a_id) ? &_rules[a_id] : nullptr;
 }
 
 std::vector<Rule*> Rules::GetByIds(std::vector<std::string> a_ids)
@@ -52,9 +59,9 @@ std::vector<Rule*> Rules::GetActive()
 {
 	std::vector<Rule*> active;
 
-	for (auto [_, rule] : _rules) {
-		if (rule->GetStatus() == Rule::Status::Active)
-			active.push_back(rule);
+	for (auto& [id, rule] : _rules) {
+		if (rule.GetStatus() == Rule::Status::Active)
+			active.push_back(&rule);
 	}
 
 	return active;

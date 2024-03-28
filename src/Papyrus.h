@@ -9,7 +9,7 @@ namespace
 {
 	using namespace Adversity;
 
-	std::vector<std::string> Filter(std::vector<std::string> a_rules, std::function<bool(Rule* a_rule)> a_check)
+	std::vector<std::string> Filter(std::vector<std::string>& a_rules, std::function<bool(Rule* a_rule)> a_check)
 	{
 		auto rules = Rules::GetByIds(a_rules);
 		std::vector<std::string> ids;
@@ -25,14 +25,16 @@ namespace
 		return ids;
 	}
 
-	std::vector<int> Weigh(std::vector<std::string> a_rules, std::function<int(Rule* a_rule)> a_calc)
+	std::vector<int> Weigh(std::vector<std::string>& a_rules, std::function<int(Rule* a_rule)> a_calc)
 	{
 		std::vector<int> weights;
-		weights.resize(a_rules.size());
+		weights.reserve(a_rules.size());
 
 		for (auto id : a_rules) {
 			if (auto rule = Rules::GetById(id))
 				weights.push_back(a_calc(rule));
+			else
+				weights.push_back(0);
 		}
 
 		return weights;
@@ -76,6 +78,13 @@ namespace Adversity::Papyrus
 		return "";
 	}
 
+	std::string GetRulePack(RE::StaticFunctionTag*, std::string a_rule)
+	{
+		if (auto rule = Rules::GetById(a_rule))
+			return rule->GetPackId();
+		return "";
+	}
+
 	int GetRuleStatus(RE::StaticFunctionTag*, std::string a_rule)
 	{
 		if (auto rule = Rules::GetById(a_rule))
@@ -112,15 +121,15 @@ namespace Adversity::Papyrus
 		std::vector<Rule*> active = Rules::GetActive();
 
 		return Filter(a_rules, [&active](Rule* a_rule) {
+
 			bool compatible = true;
 
 			for (auto rule : active) {
-				if (rule->Conflicts(a_rule)) {
+				if (rule->GetId() == a_rule->GetId() || rule->Conflicts(a_rule)) {
 					compatible = false;
 					break;
 				}
 			}
-
 			return compatible;
 		});
 	}
@@ -187,10 +196,9 @@ namespace Adversity::Papyrus
 	{
 		std::vector<int> ans;
 		if (a_1.size() != a_2.size()) {
-			logger::error("mismatched number of weights");
+			logger::error("mismatched number of weights {} {}", a_1.size(), a_2.size());
 			return ans;
 		}
-
 		
 		ans.resize(a_1.size());
 		for (auto i = 0; i < a_1.size(); i++) {
@@ -205,6 +213,8 @@ namespace Adversity::Papyrus
 		if (auto rule = Rules::GetById(a_rule)) {
 			rule->SetStatus((Rule::Status)a_status);
 			return true;
+		} else {
+			logger::info("failed to find rule {}", a_rule);
 		}
 		return false;
 	}
@@ -250,8 +260,11 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetRuleDesc)
 		REGISTERFUNC(GetRuleName)
 		REGISTERFUNC(GetRuleContext)
+		REGISTERFUNC(GetRulePack)
 		REGISTERFUNC(GetRuleStatus)
 		REGISTERFUNC(GetRuleTags)
+		
+		REGISTERFUNC(SetRuleStatus)
 
 		REGISTERFUNC(GetPackRules)
 		REGISTERFUNC(GetContextRules)

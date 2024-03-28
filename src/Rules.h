@@ -16,7 +16,7 @@ namespace Adversity
 		static std::vector<std::string> GetIds(std::vector<Rule*> a_rules);
 		static std::vector<Rule*> GetActive();
 	private:
-		static inline std::unordered_map<std::string, Rule*> _rules;
+		static inline std::unordered_map<std::string, Rule> _rules;
 		static inline std::unordered_map<std::string, std::vector<Rule*>> _contexts;
 		static inline std::unordered_map<std::string, std::vector<Rule*>> _packs;
 	};
