@@ -1,6 +1,7 @@
 #include "Papyrus.h"
 #include "Contexts.h"
 #include "Willpower.h"
+#include "Devices.h"
 
 using namespace Adversity;
 
@@ -31,6 +32,7 @@ void InitializeLog([[maybe_unused]] spdlog::level::level_enum a_level = spdlog::
 void Listener(SKSE::MessagingInterface::Message* message) noexcept
 {
 	if (message->type == SKSE::MessagingInterface::kDataLoaded) {
+		Devices::Load("data/skse/adversityframework");
 		Willpower::Init();
 		Contexts::Init();
 	}

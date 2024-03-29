@@ -1,5 +1,6 @@
 #include "Contexts.h"
 #include "Packs.h"
+#include "Devices.h"
 
 using namespace Adversity;
 
@@ -32,6 +33,7 @@ void Contexts::Init()
 			auto& context = _contexts.emplace_back(config.as<Context>());
 
 			Packs::Load(path, context.GetId());
+			Devices::Load(path, context.GetId());
 
 			logger::info("loaded context {} successfully", context.GetName());
 

@@ -4,6 +4,7 @@
 #include "Util.h"
 #include "Willpower.h"
 #include "Config.h"
+#include "Devices.h"
 
 namespace
 {
@@ -249,6 +250,21 @@ namespace Adversity::Papyrus
 		return Util::GetWeightedIndex(a_weights);
 	}
 
+	std::vector<RE::TESObjectARMO*> ArmorArray(RE::StaticFunctionTag*, unsigned int a_size, RE::TESObjectARMO* a_fill) 
+	{
+		return std::vector<RE::TESObjectARMO*>{ a_size, a_fill };
+	}
+
+	std::vector<RE::TESObjectARMO*> GetDevicesByKeyword(RE::StaticFunctionTag*, std::string a_context, RE::BGSKeyword* a_kwd)
+	{
+		return Devices::GetDevicesByKeyword(a_context, a_kwd);
+	}
+
+	std::vector<RE::TESObjectARMO*> FilterRenderedByWorn(RE::StaticFunctionTag*, std::vector<RE::TESObjectARMO*> a_devices, std::vector<RE::TESObjectARMO*> a_kwds)
+	{
+		return Devices::FilterRenderedByWorn(a_devices, a_kwds);
+	}
+
 	inline bool RegisterFuncs(VM* a_vm)
 	{	
 		// packs
@@ -287,6 +303,11 @@ namespace Adversity::Papyrus
 		// util
 		REGISTERFUNC(GetWeightedIndex)
 		REGISTERFUNC(SumArrays)
+		REGISTERFUNC(ArmorArray)
+
+		// devices
+		REGISTERFUNC(GetDevicesByKeyword)
+		REGISTERFUNC(FilterRenderedByWorn)
 
 		return true;
 	}
