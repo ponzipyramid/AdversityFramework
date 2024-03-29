@@ -44,13 +44,3 @@ void Contexts::Init()
 		}
 	}
 }
-
-void Contexts::Pause(std::string a_context)
-{
-
-}
-
-void Contexts::Reset(std::string a_context)
-{
-
-}
