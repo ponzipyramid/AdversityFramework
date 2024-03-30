@@ -1,5 +1,7 @@
 #include "Outfits.h"
 #include "Util.h"
+#include "Rules.h"
+#include "Devices.h"
 
 using namespace Adversity;
 
@@ -58,7 +60,7 @@ void Outfits::Load(std::string a_dir, std::string a_context)
 	const std::string dir{ std::format("{}/outfits", a_dir) };
 
 	if (!fs::is_directory(dir)) {
-		logger::warn("{} has no packs directory", a_context);
+		logger::warn("{} has no outfits directory", a_context);
 		return;
 	}
 
@@ -77,10 +79,14 @@ void Outfits::Load(std::string a_dir, std::string a_context)
 			auto outfitFile = YAML::LoadFile(path);
 			auto outfit = outfitFile.as<Outfit>();
 			const std::string outfitId{ std::format("{}/{}", a_context, outfit.name) };
+			outfit.id = outfitId;
 
 			_outfits.insert({ outfitId, outfit });
+
 			for (auto i = 0; i < outfit.variants.size(); i++) {
-				_variants.insert({ std::format("{}/{}", outfitId, i), outfit.variants[i] });
+				const std::string variantId{ std::format("{}/{}", outfit.id, i) };
+				outfit.variants[i].id = variantId;
+				_variants.insert({ variantId, outfit.variants[i] });
 			}
 
 			logger::info("loaded outfit {} successfully", filename);
@@ -97,26 +103,31 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 {
 	if (a_ids.empty()) return true;
 
+
 	std::unordered_set<RE::TESObjectARMO*> worn;
-	auto visitor = Helpers::WornVisitor([&worn](RE::InventoryEntryData* a_entry)
-    {
-#undef GetObject
-		const auto object = a_entry->GetObject();
+	std::vector<RE::TESObjectARMO*> wornList;
+	const auto inv = RE::PlayerCharacter::GetSingleton()->GetInventory([](RE::TESBoundObject& a_object) {
+		return a_object.IsArmor();
+	}, false);
 
-		if (!object)
-			return RE::BSContainer::ForEachResult::kContinue;
+	for (const auto& [item, invData] : inv) {
+		const auto& [count, entry] = invData;
+		if (count > 0 && entry->IsWorn()) {
+			if (const auto armor = item->As<RE::TESObjectARMO>()) {
+				worn.insert(armor);
+				wornList.push_back(armor);
+			}
+		}
+	}
 
-		const auto armo = object->As<RE::TESObjectARMO>();
-		if (!armo)
-			return RE::BSContainer::ForEachResult::kContinue;
-
-		worn.insert(armo);
-
-		return RE::BSContainer::ForEachResult::kContinue;
-	});
-
-	RE::PlayerCharacter::GetSingleton()->GetInventoryChanges()->VisitWornItems(visitor.AsNativeVisitor());
-
+	const auto& active = Rules::GetActive();
+	std::vector<RE::BGSKeyword*> excludeKwds{ Devices::GetLockableKwd() };
+	excludeKwds.reserve(active.size() + 1);
+	
+	for (auto rule : active) {
+		if (const auto kwd = rule->GetKwd())
+			excludeKwds.push_back(kwd);
+	}
 
 	std::vector<Variant*> variants;
 	for (const auto& id : a_ids) {
@@ -127,8 +138,27 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 		}
 
 		for (const auto& piece : variant->pieces) {
+			if (!piece.armo)
+				continue;
+
+			if (piece.optional)
+				continue;
+
 			if (!worn.contains(piece.armo)) {
-				valid = false;
+				
+				RE::TESObjectARMO* wornPiece = nullptr;
+				for (const auto armo : wornList) {
+					if (armo->HasPartOf(piece.armo->GetSlotMask())) {
+						wornPiece = armo;
+						break;
+					}
+				}
+
+				if (wornPiece && wornPiece->HasKeywordInArray(excludeKwds, false)) {
+					valid = false;
+				} else if (!wornPiece && !piece.nothing) {
+					valid = false;
+				}
 			}
 		}
 

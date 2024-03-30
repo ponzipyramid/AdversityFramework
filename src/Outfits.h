@@ -6,17 +6,19 @@ namespace Adversity
 	{
 		RE::TESObjectARMO* armo = nullptr;
 		bool optional;
+		bool nothing;
 	};
 
 	struct Variant
 	{
+		std::string id;
 		std::vector<Piece> pieces;
 		std::unordered_set<std::string> tags;
-		
 	};
 
 	struct Outfit
 	{
+		std::string id;
 		std::string name;
 		std::vector<Variant> variants;
 	};
@@ -47,6 +49,7 @@ namespace YAML
 			const auto id = node["id"].as<std::string>();
 			rhs.armo = RE::TESForm::LookupByEditorID<RE::TESObjectARMO>(id);
 			rhs.optional = node["optional"].as<std::string>("false") == "true";
+			rhs.nothing = node["nothing"].as<std::string>("false") == "true";
 
 			return rhs.armo != nullptr;
 		}

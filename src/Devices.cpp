@@ -5,6 +5,10 @@ using namespace Adversity;
 
 void Devices::Load(std::string a_dir, std::string a_context)
 {
+	if (!_lockableKwd) {
+		_lockableKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_Lockable");
+	}
+
 	std::string path{ std::format("{}/{}", a_dir, "devices.json") };
 
 	if (!fs::exists(path))

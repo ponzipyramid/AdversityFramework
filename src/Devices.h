@@ -27,9 +27,11 @@ namespace Adversity
 		static void Load(std::string a_dir, std::string a_context = "default");
 		static std::vector<RE::TESObjectARMO*> GetDevicesByKeyword(std::string a_context, RE::BGSKeyword* a_kwd);
 		static std::vector<RE::TESObjectARMO*> FilterRenderedByWorn(std::vector<RE::TESObjectARMO*> a_devices, std::vector<RE::TESObjectARMO*> a_worn);
+		static inline RE::BGSKeyword* GetLockableKwd() { return _lockableKwd; }
 	private:
 		static inline std::unordered_map<std::string, std::unordered_map<std::string, std::vector<Device>>> _devices;
 		static inline std::unordered_map<std::string, std::vector<std::string>> _filters;
+		static inline RE::BGSKeyword* _lockableKwd;
 	};
 }
 

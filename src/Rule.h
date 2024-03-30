@@ -27,6 +27,7 @@ namespace Adversity
 			Inactive,
 			Reserved,
 			Selected,
+			Paused,
 			Active
 		};
 
@@ -46,6 +47,7 @@ namespace Adversity
 		inline std::string GetId() { return _id; }
 		inline std::string GetContext() { return _context; }
 		inline int GetSeverity() { return _severity; }
+		inline RE::BGSKeyword* GetKwd() { return _kwd; }
 		inline Status GetStatus() { return static_cast<Status>(_global->value); }
 		inline void SetStatus(Status a_status) { _global->value = (float) a_status; }
 		bool HasTags(std::vector<std::string> a_tags, bool a_all);
@@ -56,6 +58,7 @@ namespace Adversity
 		std::string _packId;
 		std::string _name;
 		RE::TESGlobal* _global = nullptr;
+		RE::BGSKeyword* _kwd = nullptr;
 		std::string _desc;
 		int _severity;
 		std::unordered_set<std::string> _tags;
@@ -96,8 +99,12 @@ namespace YAML
 			const auto tags = node["tags"].as<std::vector<std::string>>();
 			rhs._tags = std::unordered_set<std::string>{ tags.begin(), tags.end() };
 
-			const auto globalEdid = node["global"].as<std::string>();
-			rhs._global = RE::TESForm::LookupByEditorID<RE::TESGlobal>(globalEdid);
+			const auto global = node["global"].as<std::string>();
+			rhs._global = RE::TESForm::LookupByEditorID<RE::TESGlobal>(global);
+
+			const auto keyword = node["global"].as<std::string>();
+			rhs._kwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>(keyword);
+
 
 			const auto excludes = node["excludes"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs._excludes = std::unordered_set<std::string>{ excludes.begin(), excludes.end() };

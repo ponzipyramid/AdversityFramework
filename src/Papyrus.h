@@ -5,6 +5,7 @@
 #include "Willpower.h"
 #include "Config.h"
 #include "Devices.h"
+#include "Outfits.h"
 
 namespace
 {
@@ -265,6 +266,37 @@ namespace Adversity::Papyrus
 		return Devices::FilterRenderedByWorn(a_devices, a_kwds);
 	}
 
+	std::vector<std::string> GetOutfits(RE::StaticFunctionTag*, std::string a_context, std::string a_name)
+	{
+		const auto outfit = Outfits::GetOutfit(a_context, a_name);
+		std::vector<std::string> variants;
+		variants.reserve(outfit->variants.size());
+
+		for (const auto& variant : outfit->variants) {
+			variants.push_back(variant.id);
+		}
+
+		return variants;
+	}
+
+	std::vector<RE::TESObjectARMO*> GetOutfitPieces(RE::StaticFunctionTag*, std::string a_id)
+	{
+		const auto variant = Outfits::GetVariant(a_id);
+		std::vector<RE::TESObjectARMO*> pieces;
+		pieces.reserve(variant->pieces.size());
+		
+		for (const auto& piece : variant->pieces) {
+			pieces.push_back(piece.armo);
+		}
+
+		return pieces;
+	}
+
+	bool ValidateOutfits(RE::StaticFunctionTag*, std::vector<std::string> a_ids)
+	{
+		return Outfits::Validate(a_ids);
+	}
+
 	inline bool RegisterFuncs(VM* a_vm)
 	{	
 		// packs
@@ -308,6 +340,11 @@ namespace Adversity::Papyrus
 		// devices
 		REGISTERFUNC(GetDevicesByKeyword)
 		REGISTERFUNC(FilterRenderedByWorn)
+
+		// outfits
+		REGISTERFUNC(GetOutfits)
+		REGISTERFUNC(GetOutfitPieces)
+		REGISTERFUNC(ValidateOutfits)
 
 		return true;
 	}
