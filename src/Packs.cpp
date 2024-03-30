@@ -3,15 +3,9 @@
 
 using namespace Adversity;
 
-namespace
-{
-	constexpr std::string_view ext1 = ".yaml";
-	constexpr std::string_view ext2 = ".yml";
-}
-
 void Packs::Load(std::string a_path, std::string a_context)
 {
-	std::string dir{ std::format("{}/Packs", a_path, a_context) };
+	const std::string dir{ std::format("{}/Packs", a_path, a_context) };
 
 	if (!fs::is_directory(dir)) {
 		logger::warn("{} has no packs directory", a_context);
@@ -23,8 +17,7 @@ void Packs::Load(std::string a_path, std::string a_context)
 			continue;
 		}
 
-		const auto ext = a.path().extension();
-		if (ext != ext1 && ext != ext2)
+		if (!Util::IsYAML(a.path()))
 			continue;
 
 		const auto path{ a.path().string() };

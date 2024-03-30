@@ -1,0 +1,140 @@
+#include "Outfits.h"
+#include "Util.h"
+
+using namespace Adversity;
+
+namespace Adversity::Helpers
+{
+	class IItemChangeVisitor
+	{
+	public:
+		virtual ~IItemChangeVisitor() {}
+
+		virtual RE::BSContainer::ForEachResult Visit(RE::InventoryEntryData*) { return RE::BSContainer::ForEachResult::kContinue; }; 
+		virtual bool ShouldVisit([[maybe_unused]] RE::InventoryEntryData*, [[maybe_unused]] RE::TESBoundObject*) { return true; }
+		virtual RE::BSContainer::ForEachResult Unk_03(RE::InventoryEntryData* a_entryData, [[maybe_unused]] void* a_arg2, bool* a_arg3)
+		{
+			*a_arg3 = true;
+			return Visit(a_entryData);
+		}
+
+		RE::InventoryChanges::IItemChangeVisitor& AsNativeVisitor() { return *(RE::InventoryChanges::IItemChangeVisitor*)this; }
+	};
+
+	class WornVisitor : public IItemChangeVisitor
+	{
+	public:
+		WornVisitor(std::function<RE::BSContainer::ForEachResult(RE::InventoryEntryData*)> a_fun) :
+			_fun(a_fun){};
+
+		virtual RE::BSContainer::ForEachResult Visit(RE::InventoryEntryData* a_entryData) override
+		{
+			return _fun(a_entryData);
+		}
+
+	private:
+		std::function<RE::BSContainer::ForEachResult(RE::InventoryEntryData*)> _fun;
+	};
+}
+
+Outfit* Outfits::GetOutfit(std::string a_context, std::string a_name)
+{
+	std::string id{ Util::Lower(std::format("{}/{}", a_context, a_name)) };
+	return GetOutfit(id);
+}
+
+Outfit* Outfits::GetOutfit(std::string a_id)
+{
+	return _outfits.count(a_id) ? &_outfits[a_id] : nullptr;
+}
+
+Variant* Outfits::GetVariant(std::string a_id)
+{
+	return _variants.count(a_id) ? &_variants[a_id] : nullptr;
+}
+
+void Outfits::Load(std::string a_dir, std::string a_context)
+{
+	const std::string dir{ std::format("{}/outfits", a_dir) };
+
+	if (!fs::is_directory(dir)) {
+		logger::warn("{} has no packs directory", a_context);
+		return;
+	}
+
+	for (const auto& a : fs::directory_iterator(dir)) {
+		if (fs::is_directory(a)) {
+			continue;
+		}
+
+		if (!Util::IsYAML(a.path()))
+			continue;
+
+		const auto path{ a.path().string() };
+		const auto filename{ a.path().filename().replace_extension().string() };
+
+		try {
+			auto outfitFile = YAML::LoadFile(path);
+			auto outfit = outfitFile.as<Outfit>();
+			const std::string outfitId{ std::format("{}/{}", a_context, outfit.name) };
+
+			_outfits.insert({ outfitId, outfit });
+			for (auto i = 0; i < outfit.variants.size(); i++) {
+				_variants.insert({ std::format("{}/{}", outfitId, i), outfit.variants[i] });
+			}
+
+			logger::info("loaded outfit {} successfully", filename);
+
+		} catch (const std::exception& e) {
+			logger::error("failed to load outfit {}: {}", filename, e.what());
+		} catch (...) {
+			logger::error("failed to load outfit {}", filename);
+		}
+	}
+}
+
+bool Outfits::Validate(std::vector<std::string> a_ids)
+{
+	if (a_ids.empty()) return true;
+
+	std::unordered_set<RE::TESObjectARMO*> worn;
+	auto visitor = Helpers::WornVisitor([&worn](RE::InventoryEntryData* a_entry)
+    {
+#undef GetObject
+		const auto object = a_entry->GetObject();
+
+		if (!object)
+			return RE::BSContainer::ForEachResult::kContinue;
+
+		const auto armo = object->As<RE::TESObjectARMO>();
+		if (!armo)
+			return RE::BSContainer::ForEachResult::kContinue;
+
+		worn.insert(armo);
+
+		return RE::BSContainer::ForEachResult::kContinue;
+	});
+
+	RE::PlayerCharacter::GetSingleton()->GetInventoryChanges()->VisitWornItems(visitor.AsNativeVisitor());
+
+
+	std::vector<Variant*> variants;
+	for (const auto& id : a_ids) {
+		bool valid = true;
+		const auto variant = GetVariant(id);
+		if (!variant) {
+			continue;
+		}
+
+		for (const auto& piece : variant->pieces) {
+			if (!worn.contains(piece.armo)) {
+				valid = false;
+			}
+		}
+
+		if (valid)
+			return true;
+	}
+
+	return false;
+}

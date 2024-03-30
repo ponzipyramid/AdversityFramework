@@ -27,5 +27,11 @@ namespace Adversity
 
 			return data;
 		}
+		static inline bool IsYAML(fs::path a_path)
+		{
+			return _exts.contains(a_path.extension().string());
+		}
+	private:
+		static inline const std::unordered_set<std::string> _exts{ ".yaml", ".yml" };
 	};
 }
