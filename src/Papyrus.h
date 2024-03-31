@@ -47,6 +47,30 @@ namespace Adversity::Papyrus
 {
 	constexpr std::string_view className = "AdversityFramework";
 
+	std::vector<std::string> GetContextRules(RE::StaticFunctionTag*, std::string a_context)
+	{
+		return Rules::GetIds(Rules::GetInContext(a_context));
+	}
+
+	std::vector<std::string> GetContextTags(RE::StaticFunctionTag*, std::string a_context)
+	{
+		const auto& rules = Rules::GetInContext(a_context);
+		std::set<std::string> tags;
+
+		for (auto rule : rules) {
+			for (const auto& tag : rule->GetTags()) {
+				tags.insert(tag);
+			}
+		}
+
+		return std::vector<std::string>{ tags.begin(), tags.end() };
+	}
+
+	std::vector<std::string> GetPackRules(RE::StaticFunctionTag*, std::string a_pack)
+	{
+		return Rules::GetIds(Rules::GetInPack(a_pack));
+	}
+
 	std::vector<std::string> GetPacks(RE::StaticFunctionTag*, std::string a_context)
 	{
 		return Packs::GetIds(Packs::GetByContext(a_context));
@@ -101,16 +125,6 @@ namespace Adversity::Papyrus
 		return std::vector<std::string>{};
 	}
 
-	std::vector<std::string> GetPackRules(RE::StaticFunctionTag*, std::string a_pack)
-	{
-		return Rules::GetIds(Rules::GetInPack(a_pack));
-	}
-
-	std::vector<std::string> GetContextRules(RE::StaticFunctionTag*, std::string a_context)
-	{
-		return Rules::GetIds(Rules::GetInContext(a_context));
-	}
-
 	std::vector<std::string> FilterRulesByStatus(RE::StaticFunctionTag*, std::vector<std::string> a_rules, int a_status)
 	{
 		return Filter(a_rules, [a_status](Rule* a_rule) {
@@ -120,18 +134,31 @@ namespace Adversity::Papyrus
 
 	std::vector<std::string> FilterRulesBySelectable(RE::StaticFunctionTag*, std::vector<std::string> a_rules)
 	{
-		std::vector<Rule*> active = Rules::GetActive();
+		std::unordered_set<Rule*> allowed;
+		const auto& active = Rules::Filter([&allowed](Rule* a_rule) {
+			const auto status{ a_rule->GetStatus() };
 
-		return Filter(a_rules, [&active](Rule* a_rule) {
+			if (status == Rule::Status::Reserved) {
+				allowed.insert(a_rule);
+				return true;
+			}
+
+			return status == Rule::Status::Active; 
+		});
+
+		return Filter(a_rules, [&active, &allowed](Rule* a_rule) {
 
 			bool compatible = true;
 
-			for (auto rule : active) {
-				if (rule->GetId() == a_rule->GetId() || rule->Conflicts(a_rule)) {
-					compatible = false;
-					break;
+			if (!allowed.contains(a_rule)) {
+				for (auto rule : active) {
+					if ((rule->GetId() == a_rule->GetId() && rule->GetStatus() == Rule::Status::Active) || rule->Conflicts(a_rule)) {
+						compatible = false;
+						break;
+					}
 				}
 			}
+			
 			return compatible;
 		});
 	}
@@ -256,6 +283,27 @@ namespace Adversity::Papyrus
 		return std::vector<RE::TESObjectARMO*>{ a_size, a_fill };
 	}
 
+	std::vector<std::string> FilterByPrefix(RE::StaticFunctionTag*, std::vector<std::string> a_strs, std::string a_prefix)
+	{
+		std::vector<std::string> filtered;
+
+		std::copy_if(a_strs.begin(), a_strs.end(), std::back_inserter(filtered), [&a_prefix](std::string a_str) { return a_str.starts_with(a_prefix); });
+
+		return filtered;
+	}
+
+	std::vector<std::string> RemovePrefix(RE::StaticFunctionTag*, std::vector<std::string> a_strs, std::string a_prefix)
+	{
+		std::vector<std::string> transform;
+		std::size_t len{ a_prefix.size() };
+
+		std::transform(a_strs.begin(), a_strs.end(), std::back_inserter(transform), [&a_prefix, len](std::string a_str) {			
+			return a_str.starts_with(a_prefix) ? a_str.substr(a_prefix.size()) : a_str;
+		});
+
+		return transform;
+	}
+
 	std::vector<RE::TESObjectARMO*> GetDevicesByKeyword(RE::StaticFunctionTag*, std::string a_context, RE::BGSKeyword* a_kwd)
 	{
 		return Devices::GetDevicesByKeyword(a_context, a_kwd);
@@ -299,9 +347,14 @@ namespace Adversity::Papyrus
 
 	inline bool RegisterFuncs(VM* a_vm)
 	{	
-		// packs
+		// contexts
+		REGISTERFUNC(GetContextRules)
+		REGISTERFUNC(GetContextTags)
 		REGISTERFUNC(GetPacks)
+		
+		// packs
 		REGISTERFUNC(GetPackQuest)
+		REGISTERFUNC(GetPackRules)
 		
 		// rules
 		REGISTERFUNC(GetRuleName)
@@ -313,9 +366,6 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetRuleTags)
 		
 		REGISTERFUNC(SetRuleStatus)
-
-		REGISTERFUNC(GetPackRules)
-		REGISTERFUNC(GetContextRules)
 
 		REGISTERFUNC(FilterRulesByStatus)
 		REGISTERFUNC(FilterRulesBySelectable)
@@ -336,6 +386,8 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetWeightedIndex)
 		REGISTERFUNC(SumArrays)
 		REGISTERFUNC(ArmorArray)
+		REGISTERFUNC(FilterByPrefix)
+		REGISTERFUNC(RemovePrefix)
 
 		// devices
 		REGISTERFUNC(GetDevicesByKeyword)

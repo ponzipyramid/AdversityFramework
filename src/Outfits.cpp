@@ -41,17 +41,19 @@ namespace Adversity::Helpers
 
 Outfit* Outfits::GetOutfit(std::string a_context, std::string a_name)
 {
-	std::string id{ Util::Lower(std::format("{}/{}", a_context, a_name)) };
+	std::string id{ std::format("{}/{}", a_context, a_name) };
 	return GetOutfit(id);
 }
 
 Outfit* Outfits::GetOutfit(std::string a_id)
 {
+	a_id = Util::Lower(a_id);
 	return _outfits.count(a_id) ? &_outfits[a_id] : nullptr;
 }
 
 Variant* Outfits::GetVariant(std::string a_id)
 {
+	a_id = Util::Lower(a_id);
 	return _variants.count(a_id) ? &_variants[a_id] : nullptr;
 }
 
@@ -78,7 +80,7 @@ void Outfits::Load(std::string a_dir, std::string a_context)
 		try {
 			auto outfitFile = YAML::LoadFile(path);
 			auto outfit = outfitFile.as<Outfit>();
-			const std::string outfitId{ std::format("{}/{}", a_context, outfit.name) };
+			const std::string outfitId{ std::format("{}/{}", a_context, Util::Lower(outfit.name)) };
 			outfit.id = outfitId;
 
 			_outfits.insert({ outfitId, outfit });
@@ -103,7 +105,6 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 {
 	if (a_ids.empty()) return true;
 
-
 	std::unordered_set<RE::TESObjectARMO*> worn;
 	std::vector<RE::TESObjectARMO*> wornList;
 	const auto inv = RE::PlayerCharacter::GetSingleton()->GetInventory([](RE::TESBoundObject& a_object) {
@@ -120,7 +121,7 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 		}
 	}
 
-	const auto& active = Rules::GetActive();
+	const auto& active = Rules::Filter([](Rule* a_rule) { return a_rule->GetStatus() == Rule::Status::Active; });
 	std::vector<RE::BGSKeyword*> excludeKwds{ Devices::GetLockableKwd() };
 	excludeKwds.reserve(active.size() + 1);
 	

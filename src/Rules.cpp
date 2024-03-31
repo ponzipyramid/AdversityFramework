@@ -55,14 +55,14 @@ std::vector<std::string> Rules::GetIds(std::vector<Rule*> a_rules)
 	return ids;
 }
 
-std::vector<Rule*> Rules::GetActive()
+std::vector<Rule*> Rules::Filter(std::function<bool(Rule* a_rule)> a_check)
 {
-	std::vector<Rule*> active;
+	std::vector<Rule*> filtered;
 
-	for (auto& [id, rule] : _rules) {
-		if (rule.GetStatus() == Rule::Status::Active)
-			active.push_back(&rule);
+	for (auto& [_, rule] : _rules) {
+		if (a_check(&rule))
+			filtered.push_back(&rule);
 	}
 
-	return active;
+	return filtered;
 }
