@@ -16,11 +16,18 @@ namespace Adversity
 		std::unordered_set<std::string> tags;
 	};
 
+	struct Mapping
+	{
+		RE::TESObjectARMO* in = nullptr;
+		std::vector<Variant> out;
+	};
+
 	struct Outfit
 	{
 		std::string id;
 		std::string name;
 		std::vector<Variant> variants;
+		std::vector<Mapping> mappings;
 	};
 
 	class Outfits
@@ -30,10 +37,12 @@ namespace Adversity
 		static Outfit* GetOutfit(std::string a_context, std::string a_name);
 		static Outfit* GetOutfit(std::string a_id);
 		static Variant* GetVariant(std::string a_id);
+		static Mapping* GetMapping(RE::TESObjectARMO* a_in);
 		static bool Validate(std::vector<std::string> a_ids);
 	private:
 		static inline std::unordered_map<std::string, Outfit> _outfits;
 		static inline std::unordered_map<std::string, Variant> _variants;
+		static inline std::unordered_map<RE::TESObjectARMO*, Mapping> _mappings;
 	};
 }
 
@@ -69,12 +78,26 @@ namespace YAML
 	};
 
 	template <>
+	struct convert<Mapping>
+	{
+		static bool decode(const Node& node, Mapping& rhs)
+		{
+			const auto in = node["name"].as<std::string>();
+			rhs.in = RE::TESForm::LookupByEditorID<RE::TESObjectARMO>(in);
+			rhs.out = node["out"].as<std::vector<Variant>>();
+
+			return !rhs.in || rhs.out.empty();
+		}
+	};
+
+	template <>
 	struct convert<Outfit>
 	{
 		static bool decode(const Node& node, Outfit& rhs)
 		{
 			rhs.name = node["name"].as<std::string>();
 			rhs.variants = node["variants"].as<std::vector<Variant>>();
+			rhs.mappings = node["mappings"].as<std::vector<Mapping>>();
 
 			return !rhs.name.empty() && !rhs.variants.empty();
 		}

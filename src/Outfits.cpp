@@ -17,6 +17,10 @@ void Outfits::Load(std::string a_context)
 			a_outfit.variants[i].id = variantId;
 			_variants.insert({ variantId, a_outfit.variants[i] });
 		}
+
+		for (const auto mapping : a_outfit.mappings) {
+			_mappings[mapping.in] = mapping;
+		}
 	});
 }
 
@@ -36,6 +40,11 @@ Variant* Outfits::GetVariant(std::string a_id)
 {
 	a_id = Util::Lower(a_id);
 	return _variants.count(a_id) ? &_variants[a_id] : nullptr;
+}
+
+Mapping* Outfits::GetMapping(RE::TESObjectARMO* a_in)
+{
+	return _mappings.count(a_in) ? &_mappings[a_in] : nullptr;
 }
 
 bool Outfits::Validate(std::vector<std::string> a_ids)
@@ -59,12 +68,12 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 	}
 
 	const auto& active = Rules::Filter([](Rule* a_rule) { return a_rule->GetStatus() == Rule::Status::Active; });
-	std::vector<RE::BGSKeyword*> excludeKwds{ Devices::GetLockableKwd() };
-	excludeKwds.reserve(active.size() + 1);
+	std::vector<RE::BGSKeyword*> allowedKwds{ Devices::GetLockableKwd() };
+	allowedKwds.reserve(active.size() + 1);
 	
 	for (auto rule : active) {
 		if (const auto kwd = rule->GetKwd())
-			excludeKwds.push_back(kwd);
+			allowedKwds.push_back(kwd);
 	}
 
 	std::vector<Variant*> variants;
@@ -92,9 +101,7 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 					}
 				}
 
-				if (wornPiece && wornPiece->HasKeywordInArray(excludeKwds, false)) {
-					valid = false;
-				} else if (!wornPiece && !piece.nothing) {
+				if ((wornPiece && !wornPiece->HasKeywordInArray(allowedKwds, false)) || (!wornPiece && !piece.nothing)) {
 					valid = false;
 				}
 			}

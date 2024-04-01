@@ -98,6 +98,13 @@ namespace Adversity::Papyrus
 		return "";
 	}
 
+	std::string GetRuleHint(RE::StaticFunctionTag*, std::string a_rule)
+	{
+		if (auto rule = Rules::GetById(a_rule))
+			return rule->GetHint().empty() ? rule->GetDesc() : rule->GetHint();
+		return "";
+	}
+
 	std::string GetRuleContext(RE::StaticFunctionTag*, std::string a_rule)
 	{
 		if (auto rule = Rules::GetById(a_rule))
@@ -423,6 +430,7 @@ namespace Adversity::Papyrus
 		// rules
 		REGISTERFUNC(GetRuleName)
 		REGISTERFUNC(GetRuleDesc)
+		REGISTERFUNC(GetRuleHint)
 		REGISTERFUNC(GetRuleName)
 		REGISTERFUNC(GetRuleContext)
 		REGISTERFUNC(GetRulePack)

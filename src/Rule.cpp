@@ -26,20 +26,12 @@ bool Rule::HasTag(std::string a_tag)
 	return _tags.contains(a_tag);
 }
 
-bool Conflict::With(Conflict a_other)
-{
-	if (type == a_other.type)
-		return true;
-
-	if (type == Type::Naked && a_other.type == Type::Wear)
-		return true;
-
-	return false;
-}
-
 bool Rule::Conflicts(Rule* a_rule)
 {
-	if (_excludes.contains(a_rule->GetId()) || a_rule->_excludes.contains(a_rule->GetId()))
+	if (_compatible.contains(a_rule->GetId()) || a_rule->_compatible.contains(GetId()))
+		return false;
+
+	if (_excludes.contains(a_rule->GetId()) || a_rule->_excludes.contains(GetId()))
 		return true;
 
 	for (auto thisConflict : _conflicts) {
@@ -63,4 +55,28 @@ bool Rule::ReqsMet()
 	}
 
 	return true;
+}
+
+bool Conflict::With(Conflict a_other)
+{
+	if (type == Type::Filth && a_other.type == Type::Clean) {
+		return true;
+	}
+
+	if (type == Type::Wear && a_other.type == Type::Wear) {
+		for (const auto slot : slots) {
+			if (a_other.slots.contains(slot))
+				return true;
+		}
+	}
+
+	if (type == Type::Outfit && a_other.type == Type::Naked) {
+		return true;
+	}
+
+	if (type == Type::Outfit && a_other.type == Type::Outfit) {
+		return exclusive;
+	}
+
+	return false;
 }
