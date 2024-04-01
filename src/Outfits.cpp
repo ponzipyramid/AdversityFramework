@@ -67,7 +67,7 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 		}
 	}
 
-	const auto& active = Rules::Filter([](Rule* a_rule) { return a_rule->GetStatus() == Rule::Status::Active; });
+	const auto& active = Rules::Filter([](Rule* a_rule) { return a_rule->GetStatus() == PackItem::Status::Active; });
 	std::vector<RE::BGSKeyword*> allowedKwds{ Devices::GetLockableKwd() };
 	allowedKwds.reserve(active.size() + 1);
 	

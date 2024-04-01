@@ -146,12 +146,12 @@ namespace Adversity::Papyrus
 		const auto& active = Rules::Filter([&allowed](Rule* a_rule) {
 			const auto status{ a_rule->GetStatus() };
 
-			if (status == Rule::Status::Reserved) {
+			if (status == PackItem::Status::Reserved) {
 				allowed.insert(a_rule);
 				return true;
 			}
 
-			return status == Rule::Status::Active; 
+			return status == PackItem::Status::Active; 
 		});
 
 		return Filter(a_rules, [&active, &allowed](Rule* a_rule) {
@@ -160,7 +160,7 @@ namespace Adversity::Papyrus
 
 			if (!allowed.contains(a_rule)) {
 				for (auto rule : active) {
-					if ((rule->GetId() == a_rule->GetId() && rule->GetStatus() == Rule::Status::Active) || rule->Conflicts(a_rule)) {
+					if ((rule->GetId() == a_rule->GetId() && rule->GetStatus() == PackItem::Status::Active) || rule->Conflicts(a_rule)) {
 						compatible = false;
 						break;
 					}
@@ -286,13 +286,13 @@ namespace Adversity::Papyrus
 
 	bool SetRuleStatus(RE::StaticFunctionTag*, std::string a_rule, int a_status)
 	{
-		if (a_status > (int)Rule::Status::Active)
+		if (a_status > (int)PackItem::Status::Active)
 			return false;
 
-		const auto status = (Rule::Status)a_status;
+		const auto status = (PackItem::Status)a_status;
 		
 		if (auto rule = Rules::GetById(a_rule)) {
-			if (status == Rule::Status::Inactive && !rule->ReqsMet()) { // prevent going to neutral when reqs not met 
+			if (status == PackItem::Status::Inactive && !rule->ReqsMet()) { // prevent going to neutral when reqs not met 
 				return false;
 			}
 			rule->SetStatus(status);

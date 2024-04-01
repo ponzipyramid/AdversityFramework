@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Util.h"
+#include "PackItem.h"
 
 namespace Adversity
 {
@@ -22,58 +23,19 @@ namespace Adversity
 		bool With(Conflict a_other);
 	};
 
-	class Rule
+	class Rule : public PackItem
 	{
 	public:
-		enum Status
-		{
-			Disabled,
-			Inactive,
-			Reserved,
-			Selected,
-			Paused,
-			Active
-		};
-
-		inline void Init(std::string a_context, std::string a_pack) {
-			if (_id.empty()) {
-				_context = a_context;
-				
-				// pack id alr contains context
-				_packId = a_pack;
-				_id = std::format("{}/{}", a_pack, Util::Lower(_name));
-			}
-		}
-		inline std::string GetPackId() { return _packId; }
-		inline std::string GetName() { return _name; }
-		inline std::string GetDesc() { return _desc; }
 		inline std::string GetHint() { return _hint; }
-		inline std::vector<std::string> GetTags() { return std::vector<std::string>{ _tags.begin(), _tags.end() }; }
-		inline std::string GetId() { return _id; }
-		inline std::string GetContext() { return _context; }
-		inline int GetSeverity() { return _severity; }
 		inline RE::BGSKeyword* GetKwd() { return _kwd; }
-		inline Status GetStatus() { return static_cast<Status>(_global->value); }
-		inline void SetStatus(Status a_status) { _global->value = (float) a_status; }
-		bool HasTags(std::vector<std::string> a_tags, bool a_all);
-		bool HasTag(std::string a_tag);
 		bool Conflicts(Rule* a_rule);
-		bool ReqsMet();
 	private:
-		std::string _id;
-		std::string _packId;
-		std::string _name;
-		RE::TESGlobal* _global = nullptr;
 		RE::BGSKeyword* _kwd = nullptr;
-		std::string _desc;
 		std::string _hint;
 		int _severity;
-		std::unordered_set<std::string> _tags;
 		std::vector<Conflict> _conflicts;
-		std::string _context;
 		std::unordered_set<std::string> _excludes;
 		std::unordered_set<std::string> _compatible;
-		std::vector<std::string> _reqs;
 
 		friend struct YAML::convert<Rule>;
 	};
