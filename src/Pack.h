@@ -15,10 +15,10 @@ namespace Adversity
 	class Pack
 	{
 	public:
-		inline void Init(std::string a_context) {
+		inline void Init(std::string a_context, std::string a_id) {
 			if (_context.empty()) {
 				_context = a_context;
-				_id = std::format("{}/{}", _context, Util::Lower(_name)); 
+				_id = a_id; 
 			}
 		}
 		inline RE::TESQuest* GetQuest() { return _quest; }

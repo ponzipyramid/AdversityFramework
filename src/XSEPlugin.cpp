@@ -32,7 +32,7 @@ void InitializeLog([[maybe_unused]] spdlog::level::level_enum a_level = spdlog::
 void Listener(SKSE::MessagingInterface::Message* message) noexcept
 {
 	if (message->type == SKSE::MessagingInterface::kDataLoaded) {
-		Devices::Load("data/skse/adversityframework");
+		Devices::Init();
 		Willpower::Init();
 		Contexts::Init();
 	}

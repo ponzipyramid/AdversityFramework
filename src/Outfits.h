@@ -26,7 +26,7 @@ namespace Adversity
 	class Outfits
 	{
 	public:
-		static void Load(std::string a_dir, std::string a_context);
+		static void Load(std::string a_context);
 		static Outfit* GetOutfit(std::string a_context, std::string a_name);
 		static Outfit* GetOutfit(std::string a_id);
 		static Variant* GetVariant(std::string a_id);
@@ -60,8 +60,8 @@ namespace YAML
 	{
 		static bool decode(const Node& node, Variant& rhs)
 		{
-			rhs.pieces = node["id"].as<std::vector<Piece>>();
-			const auto tags = node["tags"].as<std::vector<std::string>>();
+			rhs.pieces = node["pieces"].as<std::vector<Piece>>();
+			const auto tags = node["tags"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs.tags = std::unordered_set<std::string>{ tags.begin(), tags.end() };
 
 			return !rhs.pieces.empty();

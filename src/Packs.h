@@ -6,7 +6,7 @@ namespace Adversity
 	class Packs
 	{
 	public:
-		static void Load(std::string a_path, std::string a_context);
+		static void Load(std::string a_context);
 		static Pack* GetById(std::string a_pack);
 		static std::vector<Pack*> GetByContext(std::string a_context);
 		static std::vector<std::string> GetIds(std::vector<Pack*> a_packs);

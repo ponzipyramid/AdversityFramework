@@ -6,6 +6,7 @@
 #include "Config.h"
 #include "Devices.h"
 #include "Outfits.h"
+#include "Tattoos.h"
 
 namespace
 {
@@ -186,6 +187,45 @@ namespace Adversity::Papyrus
 		});
 	}
 
+	std::vector<std::string> FilterRulesByRequirements(RE::StaticFunctionTag*, std::vector<std::string> a_rules, std::vector<std::string> a_currRules)
+	{
+		std::set<std::string> seen;
+		for (auto& id : a_currRules) {
+			if (auto rule = Rules::GetById(id)) {
+				for (const auto& tag : rule->GetTags()) {
+					seen.insert(tag);
+				}
+			}
+		}
+
+		// TODO: tolerate OR operators
+		return Filter(a_rules, [&a_currRules, &seen](Rule* a_rule) {
+			const auto& tags = a_rule->GetTags();
+			const auto& reqs = Util::FilterByPrefix(tags, "requires");
+
+			for (const auto& req : reqs) {
+
+				const auto value{ Util::RemovePrefix(req, "requires:") };
+
+				const auto& splits = Util::Split(value, "|");
+
+				bool sat = splits.empty();
+
+				for (auto& split : splits) {
+					if (seen.contains(split)) {
+						sat = true;
+						break;
+					}
+				}
+				
+				if (!sat)
+					return false;
+			}
+
+			return true;
+		});
+	}
+
 	std::vector<int> WeighRulesBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_rules, int a_mode)
 	{
 		const auto weights = Config::Get()->weights.severity;
@@ -239,8 +279,16 @@ namespace Adversity::Papyrus
 
 	bool SetRuleStatus(RE::StaticFunctionTag*, std::string a_rule, int a_status)
 	{
+		if (a_status > (int)Rule::Status::Active)
+			return false;
+
+		const auto status = (Rule::Status)a_status;
+		
 		if (auto rule = Rules::GetById(a_rule)) {
-			rule->SetStatus((Rule::Status)a_status);
+			if (status == Rule::Status::Inactive && !rule->ReqsMet()) { // prevent going to neutral when reqs not met 
+				return false;
+			}
+			rule->SetStatus(status);
 			return true;
 		} else {
 			logger::info("failed to find rule {}", a_rule);
@@ -285,11 +333,7 @@ namespace Adversity::Papyrus
 
 	std::vector<std::string> FilterByPrefix(RE::StaticFunctionTag*, std::vector<std::string> a_strs, std::string a_prefix)
 	{
-		std::vector<std::string> filtered;
-
-		std::copy_if(a_strs.begin(), a_strs.end(), std::back_inserter(filtered), [&a_prefix](std::string a_str) { return a_str.starts_with(a_prefix); });
-
-		return filtered;
+		return Util::FilterByPrefix(a_strs, a_prefix);
 	}
 
 	std::vector<std::string> RemovePrefix(RE::StaticFunctionTag*, std::vector<std::string> a_strs, std::string a_prefix)
@@ -298,7 +342,7 @@ namespace Adversity::Papyrus
 		std::size_t len{ a_prefix.size() };
 
 		std::transform(a_strs.begin(), a_strs.end(), std::back_inserter(transform), [&a_prefix, len](std::string a_str) {			
-			return a_str.starts_with(a_prefix) ? a_str.substr(a_prefix.size()) : a_str;
+			return Util::RemovePrefix(a_str, a_prefix);
 		});
 
 		return transform;
@@ -340,6 +384,26 @@ namespace Adversity::Papyrus
 		return pieces;
 	}
 
+	int GetNumGroups(RE::StaticFunctionTag*, std::string a_context, std::string a_name)
+	{
+		return (int)Tattoos::GetGroups(a_context, a_name).size();
+	}
+
+	std::vector<std::string> GetTattooGroup(RE::StaticFunctionTag*, std::string a_context, std::string a_name, int a_index)
+	{
+		const auto& groups = Tattoos::GetGroups(a_context, a_name);
+		std::vector<std::string> tattoos;
+
+		if (a_index < groups.size()) {
+			const auto& tats = groups[a_index]->tattoos;
+			for (const auto& tat : tats) {
+				tattoos.push_back(std::format("{}<>{}", tat.section, tat.name));
+			}
+		}
+
+		return tattoos;
+	}
+
 	bool ValidateOutfits(RE::StaticFunctionTag*, std::vector<std::string> a_ids)
 	{
 		return Outfits::Validate(a_ids);
@@ -371,6 +435,7 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(FilterRulesBySelectable)
 		REGISTERFUNC(FilterRulesBySeverity)
 		REGISTERFUNC(FilterRulesByTags)
+		REGISTERFUNC(FilterRulesByRequirements)
 
 		REGISTERFUNC(WeighRulesBySeverity)
 		REGISTERFUNC(WeighRulesByTags)
@@ -397,6 +462,10 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetOutfits)
 		REGISTERFUNC(GetOutfitPieces)
 		REGISTERFUNC(ValidateOutfits)
+
+		// tattoos
+		REGISTERFUNC(GetNumGroups)
+		REGISTERFUNC(GetTattooGroup)
 
 		return true;
 	}

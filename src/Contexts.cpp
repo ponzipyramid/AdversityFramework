@@ -1,6 +1,8 @@
 #include "Contexts.h"
 #include "Packs.h"
 #include "Devices.h"
+#include "Outfits.h"
+#include "Tattoos.h"
 
 using namespace Adversity;
 
@@ -22,20 +24,16 @@ void Contexts::Init()
 		}
 
 		const auto path{ a.path().string() };
-		const auto configPath{ std::format("{}/{}", path, "config.yaml") };
+		const auto id{ Util::Lower(a.path().filename().replace_extension().string()) };
 
-		if (!std::filesystem::exists(configPath)) {
-			continue;
-		}
 
 		try {
-			auto config = YAML::LoadFile(configPath);
-			auto& context = _contexts.emplace_back(config.as<Context>());
+			Packs::Load(id);
+			Outfits::Load(id);
+			Tattoos::Load(id);
+			Devices::Load(id);
 
-			Packs::Load(path, context.GetId());
-			Devices::Load(path, context.GetId());
-
-			logger::info("loaded context {} successfully", context.GetName());
+			logger::info("loaded context {} successfully", id);
 
 		} catch (const std::exception& e) {
 			logger::error("failed to load context {}: {}", path, e.what());

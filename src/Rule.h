@@ -53,6 +53,7 @@ namespace Adversity
 		bool HasTags(std::vector<std::string> a_tags, bool a_all);
 		bool HasTag(std::string a_tag);
 		bool Conflicts(Rule* a_rule);
+		bool ReqsMet();
 	private:
 		std::string _id;
 		std::string _packId;
@@ -65,6 +66,7 @@ namespace Adversity
 		std::vector<Conflict> _conflicts;
 		std::string _context;
 		std::unordered_set<std::string> _excludes;
+		std::vector<std::string> _reqs;
 
 		friend struct YAML::convert<Rule>;
 	};
@@ -96,7 +98,7 @@ namespace YAML
 			rhs._name = node["name"].as<std::string>();
 			rhs._desc = node["desc"].as<std::string>();
 			rhs._severity = node["severity"].as<int>();
-			const auto tags = node["tags"].as<std::vector<std::string>>();
+			const auto tags = node["tags"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs._tags = std::unordered_set<std::string>{ tags.begin(), tags.end() };
 
 			const auto global = node["global"].as<std::string>();
@@ -108,6 +110,9 @@ namespace YAML
 
 			const auto excludes = node["excludes"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs._excludes = std::unordered_set<std::string>{ excludes.begin(), excludes.end() };
+
+			rhs._reqs = node["requirements"].as<std::vector<std::string>>(std::vector<std::string>{});
+
 			return !rhs._name.empty() && rhs._severity >= 0 && rhs._global;
 		}
 	};

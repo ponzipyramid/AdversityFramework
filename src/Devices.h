@@ -24,7 +24,8 @@ namespace Adversity
 	class Devices
 	{
 	public:
-		static void Load(std::string a_dir, std::string a_context = "default");
+		static void Init();
+		static void Load(std::string a_context);
 		static std::vector<RE::TESObjectARMO*> GetDevicesByKeyword(std::string a_context, RE::BGSKeyword* a_kwd);
 		static std::vector<RE::TESObjectARMO*> FilterRenderedByWorn(std::vector<RE::TESObjectARMO*> a_devices, std::vector<RE::TESObjectARMO*> a_worn);
 		static inline RE::BGSKeyword* GetLockableKwd() { return _lockableKwd; }

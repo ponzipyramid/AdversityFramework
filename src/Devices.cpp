@@ -3,16 +3,21 @@
 
 using namespace Adversity;
 
-void Devices::Load(std::string a_dir, std::string a_context)
+void Devices::Init()
 {
-	if (!_lockableKwd) {
-		_lockableKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_Lockable");
-	}
+	_lockableKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_Lockable");
+	Devices::Load("default");
+}
 
-	std::string path{ std::format("{}/{}", a_dir, "devices.json") };
+void Devices::Load(std::string a_context)
+{
+	const std::string base{ "data/skse/adversityframework" };
+	const std::string path{ a_context == "default" ? std::format("{}/devices.json", base) : std::format("{}/contexts/{}/devices.json", base, a_context) };
 
-	if (!fs::exists(path))
+	if (!fs::exists(path)) {
+		logger::warn("{} context has no devices config", a_context);
 		return;
+	}
 	
 	try {
 		std::ifstream file(path);

@@ -5,38 +5,19 @@
 
 using namespace Adversity;
 
-namespace Adversity::Helpers
+void Outfits::Load(std::string a_context)
 {
-	class IItemChangeVisitor
-	{
-	public:
-		virtual ~IItemChangeVisitor() {}
+	Util::ProcessEntities<Outfit>(a_context, "outfits", [&a_context](std::string a_id, Outfit a_outfit) {
+		a_outfit.id = a_id;
 
-		virtual RE::BSContainer::ForEachResult Visit(RE::InventoryEntryData*) { return RE::BSContainer::ForEachResult::kContinue; }; 
-		virtual bool ShouldVisit([[maybe_unused]] RE::InventoryEntryData*, [[maybe_unused]] RE::TESBoundObject*) { return true; }
-		virtual RE::BSContainer::ForEachResult Unk_03(RE::InventoryEntryData* a_entryData, [[maybe_unused]] void* a_arg2, bool* a_arg3)
-		{
-			*a_arg3 = true;
-			return Visit(a_entryData);
+		_outfits.insert({ a_id, a_outfit });
+
+		for (auto i = 0; i < a_outfit.variants.size(); i++) {
+			const std::string variantId{ std::format("{}/{}", a_outfit.id, i) };
+			a_outfit.variants[i].id = variantId;
+			_variants.insert({ variantId, a_outfit.variants[i] });
 		}
-
-		RE::InventoryChanges::IItemChangeVisitor& AsNativeVisitor() { return *(RE::InventoryChanges::IItemChangeVisitor*)this; }
-	};
-
-	class WornVisitor : public IItemChangeVisitor
-	{
-	public:
-		WornVisitor(std::function<RE::BSContainer::ForEachResult(RE::InventoryEntryData*)> a_fun) :
-			_fun(a_fun){};
-
-		virtual RE::BSContainer::ForEachResult Visit(RE::InventoryEntryData* a_entryData) override
-		{
-			return _fun(a_entryData);
-		}
-
-	private:
-		std::function<RE::BSContainer::ForEachResult(RE::InventoryEntryData*)> _fun;
-	};
+	});
 }
 
 Outfit* Outfits::GetOutfit(std::string a_context, std::string a_name)
@@ -55,50 +36,6 @@ Variant* Outfits::GetVariant(std::string a_id)
 {
 	a_id = Util::Lower(a_id);
 	return _variants.count(a_id) ? &_variants[a_id] : nullptr;
-}
-
-void Outfits::Load(std::string a_dir, std::string a_context)
-{
-	const std::string dir{ std::format("{}/outfits", a_dir) };
-
-	if (!fs::is_directory(dir)) {
-		logger::warn("{} has no outfits directory", a_context);
-		return;
-	}
-
-	for (const auto& a : fs::directory_iterator(dir)) {
-		if (fs::is_directory(a)) {
-			continue;
-		}
-
-		if (!Util::IsYAML(a.path()))
-			continue;
-
-		const auto path{ a.path().string() };
-		const auto filename{ a.path().filename().replace_extension().string() };
-
-		try {
-			auto outfitFile = YAML::LoadFile(path);
-			auto outfit = outfitFile.as<Outfit>();
-			const std::string outfitId{ std::format("{}/{}", a_context, Util::Lower(outfit.name)) };
-			outfit.id = outfitId;
-
-			_outfits.insert({ outfitId, outfit });
-
-			for (auto i = 0; i < outfit.variants.size(); i++) {
-				const std::string variantId{ std::format("{}/{}", outfit.id, i) };
-				outfit.variants[i].id = variantId;
-				_variants.insert({ variantId, outfit.variants[i] });
-			}
-
-			logger::info("loaded outfit {} successfully", filename);
-
-		} catch (const std::exception& e) {
-			logger::error("failed to load outfit {}: {}", filename, e.what());
-		} catch (...) {
-			logger::error("failed to load outfit {}", filename);
-		}
-	}
 }
 
 bool Outfits::Validate(std::vector<std::string> a_ids)

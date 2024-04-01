@@ -39,6 +39,9 @@ bool Conflict::With(Conflict a_other)
 
 bool Rule::Conflicts(Rule* a_rule)
 {
+	if (_excludes.contains(a_rule->GetId()) || a_rule->_excludes.contains(a_rule->GetId()))
+		return true;
+
 	for (auto thisConflict : _conflicts) {
 		for (auto otherConflict : a_rule->_conflicts) {
 			if (thisConflict.With(otherConflict) || otherConflict.With(thisConflict))
@@ -47,4 +50,17 @@ bool Rule::Conflicts(Rule* a_rule)
 	}
 
 	return false;
+}
+
+bool Rule::ReqsMet()
+{
+	const auto handler = RE::TESDataHandler::GetSingleton();
+	
+	for (const auto& req : _reqs) {
+		if (!handler->LookupModByName(req)) {
+			return false;
+		}
+	}
+
+	return true;
 }
