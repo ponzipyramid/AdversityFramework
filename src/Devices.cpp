@@ -6,6 +6,7 @@ using namespace Adversity;
 void Devices::Init()
 {
 	_lockableKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_Lockable");
+	_deviceKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_InventoryDevice");
 	Devices::Load("default");
 }
 
@@ -24,10 +25,25 @@ void Devices::Load(std::string a_context)
 		auto data = json::parse(file);
 		for (auto& [key, node] : data.items()) {
 			auto field = Util::Lower(key);
-			if (field == "filters") {
-				_filters[a_context] = node.template get<std::vector<std::string>>();
-			} else {
-				_devices[a_context][field] = node.template get<std::vector<Device>>();
+			if (field == "sets") {
+				const auto sets = node.template get<std::vector<std::string>>();
+				_sets[a_context].reserve(sets.size());
+				std::transform(sets.begin(), sets.end(), std::back_inserter(_sets[a_context]), [](std::string a_str) {
+					return Util::Lower(a_str);
+				});
+			} else if (field.starts_with("zad_")) {
+
+				const auto devices = node.template get<std::vector<Device>>();
+
+				std::vector<Device> valid;
+				std::copy_if(devices.begin(), devices.end(), std::back_inserter(valid), [=](Device a_device) {
+					return a_device.armo != nullptr;
+				});
+
+				_devices[a_context][field] = valid;
+				for (auto& device : _devices[a_context][field]) {
+					_pieces[device.armo->GetFormID()] = &device;
+				}
 			}
 		}
 
@@ -39,72 +55,115 @@ void Devices::Load(std::string a_context)
 	}
 }
 
-std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_context, RE::BGSKeyword* a_kwd)
+std::vector<RE::TESObjectARMO*> Devices::GetDevicesByKeyword(std::string a_context, RE::Actor* a_actor, RE::BGSKeyword* a_kwd)
 {
-	std::vector<RE::TESObjectARMO*> devices;
-	std::vector<RE::TESObjectARMO*> filtered;
+	logger::info("GetDevicesByKeyword: Start - {} {} {}", a_context, a_actor->GetName(), a_kwd->GetFormEditorID());
+
+	const auto inv = a_actor->GetInventory([](RE::TESBoundObject& a_object) {
+		return a_object.IsArmor();
+	}, false);
+
+	const auto& sets = _sets[a_context];
+
+	std::set<RE::BGSKeyword*> seenKwds;
+	std::set<std::string> wornSets;
+	std::set<std::string> hasSets;
+
+	for (const auto& [item, invData] : inv) {
+		const auto& [count, entry] = invData;
+		if (count > 0) {
+			const auto armor = item->As<RE::TESObjectARMO>();
+			if (armor->HasKeyword(_deviceKwd)) { // inventory device
+				const std::string name{ armor->GetName() };
+				
+				for (const auto& set : sets) {
+					if (Util::Lower(name).starts_with(set)) {
+						hasSets.insert(set);
+
+						if (entry->IsWorn()) {
+							wornSets.insert(set);
+						}
+					}
+				}
+			} else if (armor->HasKeyword(_lockableKwd)) { // rendered device
+				for (const auto& kwd : armor->GetKeywords()) {
+					std::string name{ kwd->GetFormEditorID() };
+					if (Util::Lower(name).starts_with("zad_devious")) {
+						seenKwds.insert(kwd);
+					}
+				}
+			}
+		}
+	}
+
+	std::vector<RE::BGSKeyword*> kwds{ seenKwds.begin(), seenKwds.end() };
+
+	std::vector<RE::TESObjectARMO*> valid;
+	std::vector<RE::TESObjectARMO*> filteredBySet;
+	std::vector<RE::TESObjectARMO*> filteredByWornSets;
+	std::vector<RE::TESObjectARMO*> filteredByHasSets;
 
 	const auto& deviceMap = _devices.count(a_context) ? _devices[a_context] : _devices["default"];
 	const std::string kwdName{ Util::Lower(a_kwd->GetFormEditorID()) };
 	
 	if (deviceMap.count(kwdName)) {
 		const auto& [_, devicesList] = *deviceMap.find(kwdName);
-		const auto& filters = _filters[a_context];
 
-		devices.reserve(devicesList.size());
-		filtered.reserve(devicesList.size());
+		valid.reserve(devicesList.size());
+		filteredBySet.reserve(devicesList.size());
+		filteredByWornSets.reserve(devicesList.size());
 
 		for (const auto& device : devicesList) {
-			if (!device.armo) {
-				logger::info("failed to find {}", device.name);
+			const auto armo = device.armo;
+
+			if (!armo) {
 				continue;
 			}
 
-			devices.push_back(device.armo);
+			if (!armo->HasKeywordInArray(kwds, false)) {
+				valid.push_back(device.armo);
 
-			bool matches = filters.empty();
+				for (const auto& set : sets) {
+					if (Util::Lower(device.name).starts_with(set)) {
+						filteredBySet.push_back(armo);
 
-			for (const auto& filter : filters) {
-				if (device.name.contains(filter)) {
-					matches = true;
-					break;
+						if (hasSets.contains(set)) {
+							filteredByHasSets.push_back(armo);
+						}
+
+						if (wornSets.contains(set)) {
+							filteredByWornSets.push_back(armo);
+						}
+
+					}
 				}
-			}
-
-			if (matches) {
-				filtered.push_back(device.armo);
 			}
 		}
 	} else {
 		logger::error("Devices::GetDevicesByKeyword: unable to find devices for {}", kwdName);
 	}
 
-	logger::info("devices found: {} {}", devices.size(), filtered.size());
-	return filtered.empty() ? devices : filtered;
+	logger::info("GetDevicesByKeyword: End - {} {} {}", filteredByWornSets.size(), filteredBySet.size(), valid.size());
+
+	if (!filteredByWornSets.empty())
+		return filteredByWornSets;
+
+	if (!filteredByHasSets.empty())
+		return filteredByHasSets;
+
+	if (!filteredBySet.empty())
+		return filteredBySet;
+
+	return valid;
 }
 
-std::vector<RE::TESObjectARMO*> Devices::FilterRenderedByWorn(std::vector<RE::TESObjectARMO*> a_devices, std::vector<RE::TESObjectARMO*> a_worn)
+bool Devices::DeviceMatches(std::string a_name, std::vector<std::string> a_filters)
 {
-	std::set<RE::BGSKeyword*> kwdSet;
-	for (auto worn : a_worn) {
-		if (!worn)
-			continue;
-
-		for (auto kwd : worn->GetKeywords()) {
-			std::string name{ kwd->GetFormEditorID() };
-			if (Util::Lower(name).starts_with("zad_devious")) {
-				kwdSet.insert(kwd);
-			}
+	for (const auto& cont : a_filters) {
+		if (Util::Lower(a_name).find(Util::Lower(cont)) != std::string::npos) {
+			return true;
 		}
 	}
 
-	std::vector<RE::BGSKeyword*> kwds{ kwdSet.begin(), kwdSet.end() }; 
-
-	std::vector<RE::TESObjectARMO*> valid;
-
-	std::copy_if(a_devices.begin(), a_devices.end(), std::back_inserter(valid), [=](RE::TESObjectARMO* device) {
-		return device && !device->HasKeywordInArray(kwds, false);
-	});
-
-	return valid;
+	return false;
 }

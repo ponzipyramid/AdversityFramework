@@ -8,12 +8,12 @@ void Rules::Load(std::string a_context, std::string a_pack, std::vector<Rule>& a
 {
 	for (auto& rule : a_rules) {
 		rule.Init(a_context, a_pack);
+		
 		_rules[rule.GetId()] = rule;
 
-		auto& ref = _rules[rule.GetId()];
-
-		_contexts[a_context].push_back(&ref);
-		_packs[a_pack].push_back(&ref);
+		auto ref = GetById(rule.GetId());
+		_contexts[a_context].push_back(ref);
+		_packs[a_pack].push_back(ref);
 	}
 }
 

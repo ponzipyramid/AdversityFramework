@@ -25,18 +25,3 @@ bool Conflict::With(Conflict a_other)
 
 	return false;
 }
-
-bool Rule::Conflicts(Rule* a_rule)
-{
-	if (_excludes.contains(a_rule->GetId()) || a_rule->_excludes.contains(a_rule->GetId()))
-		return true;
-
-	for (auto thisConflict : _conflicts) {
-		for (auto otherConflict : a_rule->_conflicts) {
-			if (thisConflict.With(otherConflict) || otherConflict.With(thisConflict))
-				return true;
-		}
-	}
-
-	return false;
-}

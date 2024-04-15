@@ -100,6 +100,11 @@ namespace Adversity
 			return v;
 		}
 
+		static inline float GetGameTime()
+		{
+			return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(0x39, "Skyrim.esm")->value;
+		}
+
 	private:
 		static inline const std::unordered_set<std::string> _exts{ ".yaml", ".yml" };
 	};

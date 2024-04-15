@@ -333,11 +333,6 @@ namespace Adversity::Papyrus
 		return Util::GetWeightedIndex(a_weights);
 	}
 
-	std::vector<RE::TESObjectARMO*> ArmorArray(RE::StaticFunctionTag*, unsigned int a_size, RE::TESObjectARMO* a_fill) 
-	{
-		return std::vector<RE::TESObjectARMO*>{ a_size, a_fill };
-	}
-
 	std::vector<std::string> FilterByPrefix(RE::StaticFunctionTag*, std::vector<std::string> a_strs, std::string a_prefix)
 	{
 		return Util::FilterByPrefix(a_strs, a_prefix);
@@ -355,14 +350,9 @@ namespace Adversity::Papyrus
 		return transform;
 	}
 
-	std::vector<RE::TESObjectARMO*> GetDevicesByKeyword(RE::StaticFunctionTag*, std::string a_context, RE::BGSKeyword* a_kwd)
+	std::vector<RE::TESObjectARMO*> GetDevicesByKeyword(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, RE::BGSKeyword* a_kwd)
 	{
-		return Devices::GetDevicesByKeyword(a_context, a_kwd);
-	}
-
-	std::vector<RE::TESObjectARMO*> FilterRenderedByWorn(RE::StaticFunctionTag*, std::vector<RE::TESObjectARMO*> a_devices, std::vector<RE::TESObjectARMO*> a_kwds)
-	{
-		return Devices::FilterRenderedByWorn(a_devices, a_kwds);
+		return Devices::GetDevicesByKeyword(a_context, a_actor, a_kwd);
 	}
 
 	std::vector<std::string> GetOutfits(RE::StaticFunctionTag*, std::string a_context, std::string a_name)
@@ -458,13 +448,11 @@ namespace Adversity::Papyrus
 		// util
 		REGISTERFUNC(GetWeightedIndex)
 		REGISTERFUNC(SumArrays)
-		REGISTERFUNC(ArmorArray)
 		REGISTERFUNC(FilterByPrefix)
 		REGISTERFUNC(RemovePrefix)
 
 		// devices
 		REGISTERFUNC(GetDevicesByKeyword)
-		REGISTERFUNC(FilterRenderedByWorn)
 
 		// outfits
 		REGISTERFUNC(GetOutfits)

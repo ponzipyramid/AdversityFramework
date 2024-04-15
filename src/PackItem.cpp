@@ -38,3 +38,18 @@ bool PackItem::ReqsMet()
 
 	return true;
 }
+
+bool PackItem::Conflicts(PackItem* a_other)
+{
+	if (_excludes.contains(a_other->GetId()) || a_other->_excludes.contains(a_other->GetId()))
+		return true;
+
+	for (auto thisConflict : _conflicts) {
+		for (auto otherConflict : a_other->_conflicts) {
+			if (thisConflict.With(otherConflict) || otherConflict.With(thisConflict))
+				return true;
+		}
+	}
+
+	return false;
+}

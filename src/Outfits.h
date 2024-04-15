@@ -96,10 +96,10 @@ namespace YAML
 		static bool decode(const Node& node, Outfit& rhs)
 		{
 			rhs.name = node["name"].as<std::string>();
-			rhs.variants = node["variants"].as<std::vector<Variant>>();
-			rhs.mappings = node["mappings"].as<std::vector<Mapping>>();
+			rhs.variants = node["variants"].as<std::vector<Variant>>(std::vector<Variant>{});
+			rhs.mappings = node["mappings"].as<std::vector<Mapping>>(std::vector<Mapping>{});
 
-			return !rhs.name.empty() && !rhs.variants.empty();
+			return !rhs.name.empty() && (!rhs.variants.empty() || !rhs.mappings.empty());
 		}
 	};
 }
