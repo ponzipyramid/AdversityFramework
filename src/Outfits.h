@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Util.h"
+
 namespace Adversity
 {
 	struct Piece
@@ -56,9 +58,28 @@ namespace YAML
 		static bool decode(const Node& node, Piece& rhs)
 		{
 			const auto id = node["id"].as<std::string>();
-			rhs.armo = RE::TESForm::LookupByEditorID<RE::TESObjectARMO>(id);
+
+			if (id.starts_with("0x")) {
+				const auto splits{ Util::Split(id, "|") };
+
+				if (splits.size() == 2) {
+					const auto formId{ std::stol(splits[0], NULL, 0) };
+					const auto modName{ splits[1] };
+
+					logger::info("Piece FormId: {} {}", splits[0], splits[1]);
+					logger::info("Piece FormId: {} {}", formId, modName);
+
+					rhs.armo = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(formId, modName);
+				}
+			} else {
+				rhs.armo = RE::TESForm::LookupByEditorID<RE::TESObjectARMO>(id);	
+			}
+
 			rhs.optional = node["optional"].as<std::string>("false") == "true";
 			rhs.nothing = node["nothing"].as<std::string>("false") == "true";
+
+			if (!rhs.armo)
+				logger::info("piece {} could not be found", id);
 
 			return rhs.armo != nullptr;
 		}

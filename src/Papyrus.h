@@ -466,6 +466,8 @@ namespace Adversity::Papyrus
 	{
 		if (const auto ev = Events::GetById(a_event)) {
 			return ev->GetName();
+		} else {
+			logger::info("failed to find event {}", a_event);
 		}
 
 		return "";
@@ -475,6 +477,8 @@ namespace Adversity::Papyrus
 	{
 		if (const auto ev = Events::GetById(a_event)) {
 			return ev->GetPackId();
+		} else {
+			logger::info("failed to find event {}", a_event);
 		}
 
 		return "";
@@ -484,6 +488,8 @@ namespace Adversity::Papyrus
 	{
 		if (const auto ev = Events::GetById(a_event)) {
 			return ev->GetName();
+		} else {
+			logger::info("failed to find event {}", a_event);
 		}
 
 		return "";
@@ -493,6 +499,8 @@ namespace Adversity::Papyrus
 	{
 		if (const auto ev = Events::GetById(a_event)) {
 			return ev->IsExclusive();
+		} else {
+			logger::info("failed to find event {}", a_event);
 		}
 
 		return false;
@@ -502,6 +510,8 @@ namespace Adversity::Papyrus
 	{
 		if (const auto ev = Events::GetById(a_event)) {
 			return ev->GetStatus();
+		} else {
+			logger::info("failed to find event {}", a_event);
 		}
 
 		return -1;

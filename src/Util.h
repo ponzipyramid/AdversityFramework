@@ -104,7 +104,6 @@ namespace Adversity
 		{
 			return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(0x39, "Skyrim.esm")->value;
 		}
-
 	private:
 		static inline const std::unordered_set<std::string> _exts{ ".yaml", ".yml" };
 	};
