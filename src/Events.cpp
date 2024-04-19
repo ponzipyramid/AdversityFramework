@@ -8,10 +8,9 @@ void Events::Load(std::string a_context, std::string a_pack, std::vector<Event>&
 		event.Init(a_context, a_pack);
 		_events[event.GetId()] = event;
 
-		auto& ref = _events[event.GetId()];
-
-		_contexts[a_context].push_back(&ref);
-		_packs[a_pack].push_back(&ref);
+		auto ref = GetById(event.GetId());
+		_contexts[a_context].push_back(ref);
+		_packs[a_pack].push_back(ref);
 	}
 }
 

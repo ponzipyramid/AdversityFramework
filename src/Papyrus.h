@@ -113,11 +113,14 @@ namespace
 
 namespace Adversity::Papyrus
 {
-	constexpr std::string_view className = "AdversityFramework";
-
 	std::vector<std::string> GetContextRules(RE::StaticFunctionTag*, std::string a_context)
 	{
 		return Rules::GetIds(Rules::GetInContext(a_context));
+	}
+
+	std::vector<std::string> GetContextEvents(RE::StaticFunctionTag*, std::string a_context)
+	{
+		return Events::GetIds(Events::GetInContext(a_context));
 	}
 
 	std::vector<std::string> GetContextTags(RE::StaticFunctionTag*, std::string a_context)
@@ -550,6 +553,7 @@ namespace Adversity::Papyrus
 	{	
 		// contexts
 		REGISTERFUNC(GetContextRules)
+		REGISTERFUNC(GetContextEvents)
 		REGISTERFUNC(GetContextTags)
 		REGISTERFUNC(GetPacks)
 		

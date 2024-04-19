@@ -63,8 +63,8 @@ namespace YAML
 			auto questEdid = node["quest"].as<std::string>();
 			rhs._quest = RE::TESForm::LookupByEditorID<RE::TESQuest>(questEdid);
 			
-			rhs.rules = node["rules"].as<std::vector<Rule>>();
-			rhs.events = node["events"].as<std::vector<Event>>();
+			rhs.rules = node["rules"].as<std::vector<Rule>>(std::vector<Rule>{});
+			rhs.events = node["events"].as<std::vector<Event>>(std::vector<Event>{});
 
 			return !rhs._name.empty() && rhs._quest && (!rhs.rules.empty() || !rhs.events.empty());
 		}
