@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Event.h"
 #include "Rule.h"
 #include "Util.h"
 
@@ -25,6 +26,7 @@ namespace Adversity
 		inline std::string GetId() { return _id; }
 		inline std::string GetName() { return _name; }
 		std::vector<Rule> rules;
+		std::vector<Event> events;
 	private:
 		std::string _id;
 		std::string _name;
@@ -62,8 +64,9 @@ namespace YAML
 			rhs._quest = RE::TESForm::LookupByEditorID<RE::TESQuest>(questEdid);
 			
 			rhs.rules = node["rules"].as<std::vector<Rule>>();
+			rhs.events = node["events"].as<std::vector<Event>>();
 
-			return !rhs._name.empty() && rhs._quest && !rhs.rules.empty();
+			return !rhs._name.empty() && rhs._quest && (!rhs.rules.empty() || !rhs.events.empty());
 		}
 	};
 }

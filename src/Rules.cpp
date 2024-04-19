@@ -55,7 +55,19 @@ std::vector<std::string> Rules::GetIds(std::vector<Rule*> a_rules)
 	return ids;
 }
 
-std::vector<Rule*> Rules::Filter(std::function<bool(Rule* a_rule)> a_check)
+std::vector<Rule*> Rules::Filter(const std::function<bool(Rule* a_rule)> a_check)
+{
+	std::vector<Rule*> filtered;
+
+	for (auto& [_, rule] : _rules) {
+		if (a_check(&rule))
+			filtered.push_back(&rule);
+	}
+
+	return filtered;
+}
+
+std::vector<Rule*> Rules::Filter(const std::vector<Rule*> a_rules, std::function<bool(Rule* a_rule)> a_check)
 {
 	std::vector<Rule*> filtered;
 

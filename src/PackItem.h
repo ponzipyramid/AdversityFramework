@@ -28,7 +28,7 @@ namespace Adversity
 		enum Status
 		{
 			Disabled,
-			Inactive,
+			Enabled,
 			Reserved,
 			Selected,
 			Paused,
@@ -53,7 +53,10 @@ namespace Adversity
 		inline std::string GetContext() { return _context; }
 		inline int GetSeverity() { return _severity; }
 		inline Status GetStatus() { return static_cast<Status>(_global->value); }
-		inline void SetStatus(Status a_status) { _global->value = (float)a_status; }
+		inline void SetStatus(Status a_status) { 
+			logger::info("setting {} to {}", _global->GetFormEditorID(), (int)a_status);
+			_global->value = (float)a_status;
+		}
 		bool HasTags(std::vector<std::string> a_tags, bool a_all);
 		bool HasTag(std::string a_tag);
 		bool Conflicts(PackItem* a_rule);

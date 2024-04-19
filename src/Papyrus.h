@@ -7,40 +7,107 @@
 #include "Devices.h"
 #include "Outfits.h"
 #include "Tattoos.h"
+#include "Events.h"
 
 namespace
 {
 	using namespace Adversity;
 
-	std::vector<std::string> Filter(std::vector<std::string>& a_rules, std::function<bool(Rule* a_rule)> a_check)
+	std::vector<std::string> Filter(std::vector<PackItem*> a_items, std::function<bool(PackItem* a_rule)> a_check)
 	{
-		auto rules = Rules::GetByIds(a_rules);
 		std::vector<std::string> ids;
-		rules.reserve(a_rules.size());
 
-		for (auto id : a_rules) {
-			if (auto rule = Rules::GetById(id)) {
-				if (a_check(rule))
-					ids.push_back(rule->GetId());
+		for (const auto item : a_items)
+		{
+			if (a_check(item))
+			{
+				ids.push_back(item->GetId());
 			}
 		}
 
 		return ids;
 	}
 
-	std::vector<int> Weigh(std::vector<std::string>& a_rules, std::function<int(Rule* a_rule)> a_calc)
+	std::vector<std::string> FilterByStatus(std::vector<PackItem*> a_items, int a_status)
+	{
+		return Filter(a_items, [a_status](PackItem* a_rule) {
+			return a_rule->GetStatus() == a_status;
+		});
+	}
+
+	std::vector<std::string> FilterBySeverity(std::vector<PackItem*> a_items, int a_severity, bool a_greater, bool a_equal)
+	{
+		return Filter(a_items, [a_severity, a_greater, a_equal](PackItem* a_rule) {
+			const auto severity = a_rule->GetSeverity();
+
+			if (a_equal && severity == a_severity)
+				return true;
+			if (a_greater && severity > a_severity)
+				return true;
+			if (!a_greater && severity < a_severity)
+				return true;
+
+			return false;
+		});
+	}
+
+	
+	std::vector<std::string> FilterByTags(std::vector<PackItem*> a_items, std::vector<std::string> a_tags, bool a_all, bool a_invert)
+	{
+		return Filter(a_items, [&a_tags, a_all, a_invert](PackItem* a_rule) {
+			return a_rule->HasTags(a_tags, a_all) != a_invert;
+		});
+	}
+
+	std::vector<int> Weigh(std::vector<PackItem*> a_items, std::function<int(PackItem* a_rule)> a_calc)
 	{
 		std::vector<int> weights;
-		weights.reserve(a_rules.size());
 
-		for (auto id : a_rules) {
-			if (auto rule = Rules::GetById(id))
-				weights.push_back(a_calc(rule));
-			else
-				weights.push_back(0);
+		for (const auto item : a_items) {
+			weights.push_back(a_calc(item));
 		}
 
 		return weights;
+	}
+
+	std::vector<int> WeighBySeverity(std::vector<PackItem*> a_items, std::vector<int> a_weights)
+	{
+		return Weigh(a_items, [&a_weights](PackItem* a_rule) {
+			const auto severity = a_rule->GetSeverity();
+			return a_weights[severity - 1];
+		});
+	}
+
+	std::vector<int> WeighByTags(std::vector<PackItem*> a_items, std::vector<std::string> a_tags, bool a_per, int a_weight)
+	{
+		return Weigh(a_items, [&a_tags, a_per, a_weight](PackItem* a_item) {
+			int total = 0;
+
+			for (auto& tag : a_tags) {
+				if (a_item->HasTag(tag)) {
+					total += a_weight;
+					if (!a_per)
+						break;
+				}
+			}
+
+			return total;
+		});
+	}
+
+	bool SetStatus(PackItem* a_item, int a_status)
+	{
+		if (a_status > (int)PackItem::Status::Active)
+			return false;
+
+		const auto status = (PackItem::Status)a_status;
+
+		if (status == PackItem::Status::Enabled && !a_item->ReqsMet()) {  // prevent going to neutral when reqs not met
+			return false;
+		}
+
+		a_item->SetStatus(status);
+		return true;
 	}
 }
 
@@ -66,6 +133,15 @@ namespace Adversity::Papyrus
 
 		return std::vector<std::string>{ tags.begin(), tags.end() };
 	}
+
+	std::string GetPackName(RE::StaticFunctionTag*, std::string a_pack) {
+		if (const auto pack = Packs::GetById(a_pack)) {
+			return pack->GetName();
+		}
+
+		return "";
+	}
+
 
 	std::vector<std::string> GetPackRules(RE::StaticFunctionTag*, std::string a_pack)
 	{
@@ -135,9 +211,20 @@ namespace Adversity::Papyrus
 
 	std::vector<std::string> FilterRulesByStatus(RE::StaticFunctionTag*, std::vector<std::string> a_rules, int a_status)
 	{
-		return Filter(a_rules, [a_status](Rule* a_rule) {
-			return a_rule->GetStatus() == a_status;
-		});
+		const auto rules{ Rules::GetByIds(a_rules) };
+		return FilterByStatus(std::vector<PackItem*>{ rules.begin(), rules.end() }, a_status);
+	}
+
+	std::vector<std::string> FilterRulesBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_rules, int a_severity, bool a_greater, bool a_equal)
+	{
+		const auto rules{ Rules::GetByIds(a_rules) };
+		return FilterBySeverity(std::vector<PackItem*>{ rules.begin(), rules.end() }, a_severity, a_greater, a_equal);
+	}
+
+	std::vector<std::string> FilterRulesByTags(RE::StaticFunctionTag*, std::vector<std::string> a_rules, std::vector<std::string> a_tags, bool a_all, bool a_invert)
+	{
+		const auto rules{ Rules::GetByIds(a_rules) };
+		return FilterByTags(std::vector<PackItem*>{ rules.begin(), rules.end() }, a_tags, a_all, a_invert);
 	}
 
 	std::vector<std::string> FilterRulesBySelectable(RE::StaticFunctionTag*, std::vector<std::string> a_rules)
@@ -154,44 +241,28 @@ namespace Adversity::Papyrus
 			return status == PackItem::Status::Active; 
 		});
 
-		return Filter(a_rules, [&active, &allowed](Rule* a_rule) {
+		const auto rules{ Rules::GetByIds(a_rules) };
+		const auto filtered{ 
+			Rules::Filter(rules, [&active, &allowed](Rule* a_rule) {
+				if (a_rule->GetStatus() == PackItem::Status::Disabled)
+					return false;
 
-			bool compatible = true;
+				bool compatible = true;
 
-			if (!allowed.contains(a_rule)) {
-				for (auto rule : active) {
-					if ((rule->GetId() == a_rule->GetId() && rule->GetStatus() == PackItem::Status::Active) || rule->Conflicts(a_rule)) {
-						compatible = false;
-						break;
+				if (!allowed.contains(a_rule)) {
+					for (auto rule : active) {
+						if ((rule->GetId() == a_rule->GetId() && rule->GetStatus() == PackItem::Status::Active) || rule->Conflicts(a_rule)) {
+							compatible = false;
+							break;
+						}
 					}
 				}
-			}
-			
-			return compatible;
-		});
-	}
 
-	std::vector<std::string> FilterRulesBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_rules, int a_severity, bool a_greater, bool a_equal)
-	{
-		return Filter(a_rules, [a_severity, a_greater, a_equal](Rule* a_rule) {
-			const auto severity = a_rule->GetSeverity();
+				return compatible;
+			}) 
+		};
 
-			if (a_equal && severity == a_severity)
-				return true;
-			if (a_greater && severity > a_severity)
-				return true;
-			if (!a_greater && severity < a_severity)
-				return true;
-
-			return false;
-		});
-	}
-
-	std::vector<std::string> FilterRulesByTags(RE::StaticFunctionTag*, std::vector<std::string> a_rules, std::vector<std::string> a_tags, bool a_all, bool a_invert)
-	{
-		return Filter(a_rules, [&a_tags, a_all, a_invert](Rule* a_rule) {
-			return a_rule->HasTags(a_tags, a_all) != a_invert;
-		});
+		return Rules::GetIds(filtered);
 	}
 
 	std::vector<std::string> FilterRulesByRequirements(RE::StaticFunctionTag*, std::vector<std::string> a_rules, std::vector<std::string> a_currRules)
@@ -206,66 +277,47 @@ namespace Adversity::Papyrus
 		}
 
 		// TODO: tolerate OR operators
-		return Filter(a_rules, [&a_currRules, &seen](Rule* a_rule) {
-			const auto& tags = a_rule->GetTags();
-			const auto& reqs = Util::FilterByPrefix(tags, "requires");
+		const auto rules{ Rules::GetByIds(a_rules) };
+		const auto filtered{
+			Rules::Filter(rules, [&a_currRules, &seen](Rule* a_rule) {
+				const auto& tags = a_rule->GetTags();
+				const auto& reqs = Util::FilterByPrefix(tags, "requires");
 
-			for (const auto& req : reqs) {
+				for (const auto& req : reqs) {
+					const auto value{ Util::RemovePrefix(req, "requires:") };
 
-				const auto value{ Util::RemovePrefix(req, "requires:") };
+					const auto& splits = Util::Split(value, "|");
 
-				const auto& splits = Util::Split(value, "|");
+					bool sat = splits.empty();
 
-				bool sat = splits.empty();
-
-				for (auto& split : splits) {
-					if (seen.contains(split)) {
-						sat = true;
-						break;
+					for (auto& split : splits) {
+						if (seen.contains(split)) {
+							sat = true;
+							break;
+						}
 					}
-				}
-				
-				if (!sat)
-					return false;
-			}
 
-			return true;
-		});
+					if (!sat)
+						return false;
+				}
+
+				return true;
+			})
+		};
+
+		return Rules::GetIds(filtered);
 	}
 
-	std::vector<int> WeighRulesBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_rules, int a_mode)
+	std::vector<int> WeighRulesBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_rules, std::vector<int> a_weights)
 	{
-		const auto weights = Config::Get()->weights.severity;
-		auto sevWeight = weights.low;
-		if (a_mode == 1) {
-			sevWeight = weights.med;
-		} else {
-			sevWeight = weights.high;
-		}
-
-		return Weigh(a_rules, [a_mode, &sevWeight](Rule* a_rule) {
-			const auto severity = a_rule->GetSeverity();
-			return sevWeight[severity - 1];
-		});
+		const auto rules{ Rules::GetByIds(a_rules) };
+		return WeighBySeverity(std::vector<PackItem*>{ rules.begin(), rules.end() }, a_weights);
 	}
 
-	std::vector<int> WeighRulesByTags(RE::StaticFunctionTag*, std::vector<std::string> a_rules, std::vector<std::string> a_tags, bool a_per)
+	std::vector<int> WeighRulesByTags(RE::StaticFunctionTag*, std::vector<std::string> a_rules, std::vector<std::string> a_tags, bool a_per, int a_weight)
 	{
-		const auto weight = Config::Get()->weights.tag;
-
-		return Weigh(a_rules, [&a_tags, a_per, weight](Rule* a_rule) {
-			int total = 0;
-
-			for (auto& tag : a_tags) {
-				if (a_rule->HasTag(tag)) {
-					total += weight;
-					if (!a_per)
-						break;
-				}
-			}
-			
-			return total;
-		});
+		const auto rules{ Rules::GetByIds(a_rules) };
+		return WeighByTags(std::vector<PackItem*>{ rules.begin(), rules.end() }, a_tags, a_per, a_weight);
 	}
 
 	std::vector<int> SumArrays(RE::StaticFunctionTag*, std::vector<int> a_1, std::vector<int> a_2)
@@ -286,17 +338,8 @@ namespace Adversity::Papyrus
 
 	bool SetRuleStatus(RE::StaticFunctionTag*, std::string a_rule, int a_status)
 	{
-		if (a_status > (int)PackItem::Status::Active)
-			return false;
-
-		const auto status = (PackItem::Status)a_status;
-		
 		if (auto rule = Rules::GetById(a_rule)) {
-			if (status == PackItem::Status::Inactive && !rule->ReqsMet()) { // prevent going to neutral when reqs not met 
-				return false;
-			}
-			rule->SetStatus(status);
-			return true;
+			return SetStatus(rule, a_status);
 		} else {
 			logger::info("failed to find rule {}", a_rule);
 		}
@@ -357,25 +400,35 @@ namespace Adversity::Papyrus
 
 	std::vector<std::string> GetOutfits(RE::StaticFunctionTag*, std::string a_context, std::string a_name)
 	{
-		const auto outfit = Outfits::GetOutfit(a_context, a_name);
 		std::vector<std::string> variants;
-		variants.reserve(outfit->variants.size());
+		if (const auto outfit = Outfits::GetOutfit(a_context, a_name)) {
+			
+			variants.reserve(outfit->variants.size());
 
-		for (const auto& variant : outfit->variants) {
-			variants.push_back(variant.id);
+			for (const auto& variant : outfit->variants) {
+				logger::info("adding variant {} for {}", variant.id, a_name);
+				variants.push_back(variant.id);
+			}
+
+		} else {
+			logger::error("failed to find outfit: {}", a_name);
 		}
 
-		return variants;
+		return variants;		
 	}
 
 	std::vector<RE::TESObjectARMO*> GetOutfitPieces(RE::StaticFunctionTag*, std::string a_id)
 	{
-		const auto variant = Outfits::GetVariant(a_id);
 		std::vector<RE::TESObjectARMO*> pieces;
-		pieces.reserve(variant->pieces.size());
 		
-		for (const auto& piece : variant->pieces) {
-			pieces.push_back(piece.armo);
+		if (const auto variant = Outfits::GetVariant(a_id)) {
+			pieces.reserve(variant->pieces.size());
+
+			for (const auto& piece : variant->pieces) {
+				pieces.push_back(piece.armo);
+			}
+		} else {
+			logger::error("failed to find variant: {}", a_id);
 		}
 
 		return pieces;
@@ -406,6 +459,93 @@ namespace Adversity::Papyrus
 		return Outfits::Validate(a_ids);
 	}
 
+	std::string GetEventName(RE::StaticFunctionTag*, std::string a_event)
+	{
+		if (const auto ev = Events::GetById(a_event)) {
+			return ev->GetName();
+		}
+
+		return "";
+	}
+
+	std::string GetEventPack(RE::StaticFunctionTag*, std::string a_event)
+	{
+		if (const auto ev = Events::GetById(a_event)) {
+			return ev->GetPackId();
+		}
+
+		return "";
+	}
+
+	std::string GetEventDesc(RE::StaticFunctionTag*, std::string a_event)
+	{
+		if (const auto ev = Events::GetById(a_event)) {
+			return ev->GetName();
+		}
+
+		return "";
+	}
+
+	bool IsExclusive(RE::StaticFunctionTag*, std::string a_event)
+	{
+		if (const auto ev = Events::GetById(a_event)) {
+			return ev->IsExclusive();
+		}
+
+		return false;
+	}
+
+	int GetEventStatus(RE::StaticFunctionTag*, std::string a_event)
+	{
+		if (const auto ev = Events::GetById(a_event)) {
+			return ev->GetStatus();
+		}
+
+		return -1;
+	}
+
+	bool SetEventStatus(RE::StaticFunctionTag*, std::string a_event, int a_status)
+	{
+		if (auto ev = Events::GetById(a_event)) {
+			return SetStatus(ev, a_status);
+		} else {
+			logger::info("failed to find event {}", a_event);
+		}
+		return false;
+	}
+
+	void SetLock(RE::StaticFunctionTag*, bool a_enable)
+	{
+		Util::GetFormById<RE::TESGlobal>(0x81B)->value = (float)a_enable;
+	}
+
+	std::vector<std::string> GetEventConflictingRules(RE::StaticFunctionTag*, std::string a_event)
+	{
+		std::vector<std::string> rules;
+		
+		if (const auto ev = Events::GetById(a_event)) {
+			const auto& active = Rules::Filter([ev](Rule* a_rule) {
+				const auto status{ a_rule->GetStatus() };
+				return status == PackItem::Status::Active && a_rule->Conflicts(ev);
+			});
+			rules = Rules::GetIds(active);
+		}
+
+		return rules;
+	}
+
+	std::vector<std::string> FilterEventsByStatus(RE::StaticFunctionTag*, std::vector<std::string> a_events, int a_status)
+	{
+		const auto events { Events::GetByIds(a_events) };
+		return FilterByStatus(std::vector<PackItem*>{ events.begin(), events.end() }, a_status);
+	}
+	
+	std::vector<std::string> FilterEventsByTags(RE::StaticFunctionTag*, std::vector<std::string> a_events, std::vector<std::string> a_tags, bool a_all, bool a_invert)
+	{
+		const auto events{ Events::GetByIds(a_events) };
+		return FilterByTags(std::vector<PackItem*>{ events.begin(), events.end() }, a_tags, a_all, a_invert);
+	}
+
 	inline bool RegisterFuncs(VM* a_vm)
 	{	
 		// contexts
@@ -416,12 +556,12 @@ namespace Adversity::Papyrus
 		// packs
 		REGISTERFUNC(GetPackQuest)
 		REGISTERFUNC(GetPackRules)
+		REGISTERFUNC(GetPackName)
 		
 		// rules
 		REGISTERFUNC(GetRuleName)
 		REGISTERFUNC(GetRuleDesc)
 		REGISTERFUNC(GetRuleHint)
-		REGISTERFUNC(GetRuleName)
 		REGISTERFUNC(GetRuleContext)
 		REGISTERFUNC(GetRulePack)
 		REGISTERFUNC(GetRuleStatus)
@@ -437,6 +577,18 @@ namespace Adversity::Papyrus
 
 		REGISTERFUNC(WeighRulesBySeverity)
 		REGISTERFUNC(WeighRulesByTags)
+
+		// events
+		REGISTERFUNC(GetEventName)
+		REGISTERFUNC(GetEventPack)
+		REGISTERFUNC(GetEventDesc)
+		REGISTERFUNC(GetEventStatus)
+		REGISTERFUNC(SetEventStatus)
+		REGISTERFUNC(IsExclusive)
+		REGISTERFUNC(SetLock)
+		REGISTERFUNC(GetEventConflictingRules)
+		REGISTERFUNC(FilterEventsByStatus)
+		REGISTERFUNC(FilterEventsByTags)
 
 		// willpower 
 		REGISTERFUNC(GetWillpower)

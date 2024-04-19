@@ -1,5 +1,6 @@
 #include "Packs.h"
 #include "Rules.h"
+#include "Events.h"
 
 using namespace Adversity;
 
@@ -15,6 +16,7 @@ void Packs::Load(std::string a_context)
 		_contexts[a_context].push_back(&pack);
 
 		Rules::Load(a_context, a_pack.GetId(), a_pack.rules);
+		Events::Load(a_context, a_pack.GetId(), a_pack.events);
 	});
 }
 
