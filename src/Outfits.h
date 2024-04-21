@@ -6,6 +6,7 @@ namespace Adversity
 {
 	struct Piece
 	{
+		inline bool IsValid() const { return armo != nullptr; }
 		RE::TESObjectARMO* armo = nullptr;
 		bool optional;
 		bool nothing;
@@ -13,6 +14,15 @@ namespace Adversity
 
 	struct Variant
 	{
+		inline bool IsValid() const {
+			for (const auto& piece : pieces) {
+				if (!piece.IsValid()) {
+					return false;
+				}
+			}
+
+			return true;
+		}
 		std::string id;
 		std::vector<Piece> pieces;
 		std::unordered_set<std::string> tags;
@@ -20,12 +30,43 @@ namespace Adversity
 
 	struct Mapping
 	{
+		inline bool Validate()
+		{
+			std::erase_if(out, [](Variant a_rule) {
+				return a_rule.IsValid();
+			});
+
+			return !in && !out.empty();
+		}
 		RE::TESObjectARMO* in = nullptr;
 		std::vector<Variant> out;
 	};
 
 	struct Outfit
 	{
+		inline bool Validate()
+		{
+			const auto outfitId{ id };
+			int index = 0;
+			std::erase_if(variants, [outfitId, &index](Variant a_var) {
+				if (a_var.IsValid())
+					return false;
+
+				logger::info("{} variant at index {} is invalid", outfitId, index++);
+				return true;
+			});
+
+			index = 0;
+			std::erase_if(mappings, [outfitId, &index](Mapping a_map) {
+				if (a_map.Validate())
+					return false;
+
+				logger::info("{} mapping at index {} is invalid", outfitId, index++);
+				return true;
+			});
+
+			return !id.empty() && !name.empty() && (!variants.empty() || !mappings.empty());
+		}
 		std::string id;
 		std::string name;
 		std::vector<Variant> variants;
@@ -66,9 +107,6 @@ namespace YAML
 					const auto formId{ std::stol(splits[0], NULL, 0) };
 					const auto modName{ splits[1] };
 
-					logger::info("Piece FormId: {} {}", splits[0], splits[1]);
-					logger::info("Piece FormId: {} {}", formId, modName);
-
 					rhs.armo = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(formId, modName);
 				}
 			} else {
@@ -78,10 +116,7 @@ namespace YAML
 			rhs.optional = node["optional"].as<std::string>("false") == "true";
 			rhs.nothing = node["nothing"].as<std::string>("false") == "true";
 
-			if (!rhs.armo)
-				logger::info("piece {} could not be found", id);
-
-			return rhs.armo != nullptr;
+			return true;
 		}
 	};
 
@@ -94,7 +129,7 @@ namespace YAML
 			const auto tags = node["tags"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs.tags = std::unordered_set<std::string>{ tags.begin(), tags.end() };
 
-			return !rhs.pieces.empty();
+			return true;
 		}
 	};
 
@@ -107,7 +142,7 @@ namespace YAML
 			rhs.in = RE::TESForm::LookupByEditorID<RE::TESObjectARMO>(in);
 			rhs.out = node["out"].as<std::vector<Variant>>();
 
-			return !rhs.in || rhs.out.empty();
+			return true;
 		}
 	};
 
@@ -120,7 +155,7 @@ namespace YAML
 			rhs.variants = node["variants"].as<std::vector<Variant>>(std::vector<Variant>{});
 			rhs.mappings = node["mappings"].as<std::vector<Mapping>>(std::vector<Mapping>{});
 
-			return !rhs.name.empty() && (!rhs.variants.empty() || !rhs.mappings.empty());
+			return true;
 		}
 	};
 }

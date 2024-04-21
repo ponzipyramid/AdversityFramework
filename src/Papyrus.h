@@ -102,7 +102,8 @@ namespace
 
 		const auto status = (PackItem::Status)a_status;
 
-		if (status == PackItem::Status::Enabled && !a_item->ReqsMet()) {  // prevent going to neutral when reqs not met
+		// prevent any state except disabled when reqs are not met
+		if (!a_item->ReqsMet() && a_status != PackItem::Status::Disabled) {
 			return false;
 		}
 

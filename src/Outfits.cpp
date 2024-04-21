@@ -10,16 +10,22 @@ void Outfits::Load(std::string a_context)
 	Util::ProcessEntities<Outfit>(a_context, "outfits", [&a_context](std::string a_id, Outfit a_outfit) {
 		a_outfit.id = a_id;
 
-		auto& outfit = (*_outfits.insert({ a_id, a_outfit }).first).second;
+		if (a_outfit.Validate()) {
+			_outfits.insert({ a_id, a_outfit });
 
-		for (auto i = 0; i < outfit.variants.size(); i++) {
-			const std::string variantId{ std::format("{}/{}", a_outfit.id, i) };
-			outfit.variants[i].id = variantId;
-			_variants.insert({ variantId, outfit.variants[i] });
-		}
+			auto& outfit{ _outfits[a_id] };
 
-		for (const auto mapping : a_outfit.mappings) {
-			_mappings[mapping.in] = mapping;
+			for (auto i = 0; i < outfit.variants.size(); i++) {
+				const std::string variantId{ std::format("{}/{}", a_outfit.id, i) };
+				outfit.variants[i].id = variantId;
+				_variants.insert({ variantId, outfit.variants[i] });
+			}
+
+			for (auto& mapping : a_outfit.mappings) {
+				_mappings[mapping.in] = mapping;
+			}
+		} else {
+			throw std::exception{ "failed to validate" };
 		}
 	});
 }

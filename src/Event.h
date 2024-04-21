@@ -10,6 +10,7 @@ namespace Adversity
 		inline bool IsCooldownComplete() { return _timer->value <= Util::GetGameTime(); }
 		inline bool SetCooldown(float a_delta) { return _timer->value = Util::GetGameTime() + a_delta; }
 		inline bool IsExclusive() { return _exclusive; }
+		inline bool IsValid() { return !_name.empty() && _global; }
 	private:
 		RE::TESGlobal* _timer;
 		bool _exclusive;
@@ -49,7 +50,7 @@ namespace YAML
 
 			rhs._exclusive = node["exclusive"].as<std::string>("true") == "true";
 
-			return !rhs._name.empty() && rhs._severity >= 0 && rhs._global;
+			return true;
 		}
 	};
 }

@@ -10,6 +10,7 @@ namespace Adversity
 	public:
 		inline std::string GetHint() { return _hint; }
 		inline RE::BGSKeyword* GetKwd() { return _kwd; }
+		inline bool IsValid() { return !_name.empty() && _global; }
 	private:
 		RE::BGSKeyword* _kwd = nullptr;
 		std::string _hint;
@@ -45,7 +46,7 @@ namespace YAML
 			const auto compatible = node["compatible"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs._compatible = std::unordered_set<std::string>{ compatible.begin(), compatible.end() };
 
-			return !rhs._name.empty() && rhs._severity >= 0 && rhs._global;
+			return true;
 		}
 	};
 }
