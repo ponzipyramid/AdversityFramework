@@ -104,6 +104,12 @@ namespace Adversity
 		{
 			return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(0x39, "Skyrim.esm")->value;
 		}
+
+		static inline void AddKwd(RE::TESObjectARMO* a_form, std::string a_kwd) {
+			if (const auto kwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>(a_kwd)) {
+				a_form->AddKeyword(kwd);
+			}
+		}
 	private:
 		static inline const std::unordered_set<std::string> _exts{ ".yaml", ".yml" };
 	};

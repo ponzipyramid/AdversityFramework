@@ -82,11 +82,17 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 			allowedKwds.push_back(kwd);
 	}
 
+	logger::info("validating - START");
+	for (const auto id : a_ids) {
+		logger::info("validating - {}", id);
+	}
+
 	std::vector<Variant*> variants;
 	for (const auto& id : a_ids) {
 		bool valid = true;
 		const auto variant = GetVariant(id);
 		if (!variant) {
+			logger::info("{} variant could not be found", id);
 			continue;
 		}
 
@@ -108,7 +114,9 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 				}
 
 				if ((wornPiece && !wornPiece->HasKeywordInArray(allowedKwds, false)) || (!wornPiece && !piece.nothing)) {
+					logger::info("{} is not a valid due", id);
 					valid = false;
+					break;
 				}
 			}
 		}

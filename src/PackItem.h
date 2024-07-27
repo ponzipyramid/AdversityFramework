@@ -13,6 +13,7 @@ namespace Adversity
 			Naked,
 			Filth,
 			Outfit,
+			HeavyBondage,
 			Clean
 		};
 

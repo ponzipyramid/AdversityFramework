@@ -113,6 +113,13 @@ namespace YAML
 				rhs.armo = RE::TESForm::LookupByEditorID<RE::TESObjectARMO>(id);	
 			}
 
+			if (rhs.armo) {
+				const auto kwds = node["addKeywords"].as<std::vector<std::string>>(std::vector<std::string>{});
+				for (const auto& kwd : kwds) {
+					Util::AddKwd(rhs.armo, kwd);
+				}
+			}
+
 			rhs.optional = node["optional"].as<std::string>("false") == "true";
 			rhs.nothing = node["nothing"].as<std::string>("false") == "true";
 
@@ -154,6 +161,17 @@ namespace YAML
 			rhs.name = node["name"].as<std::string>();
 			rhs.variants = node["variants"].as<std::vector<Variant>>(std::vector<Variant>{});
 			rhs.mappings = node["mappings"].as<std::vector<Mapping>>(std::vector<Mapping>{});
+
+			const auto kwds = node["addKeywords"].as<std::vector<std::string>>(std::vector<std::string>{});
+			for (const auto& variant : rhs.variants) {
+				for (const auto& piece : variant.pieces) {
+					if (const auto armo = piece.armo) {
+						for (const auto& kwd : kwds) {
+							Util::AddKwd(armo, kwd);
+						}
+					}
+				}
+			}
 
 			return true;
 		}

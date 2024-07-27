@@ -71,9 +71,9 @@ std::vector<Rule*> Rules::Filter(const std::vector<Rule*> a_rules, std::function
 {
 	std::vector<Rule*> filtered;
 
-	for (auto& [_, rule] : _rules) {
-		if (a_check(&rule))
-			filtered.push_back(&rule);
+	for (auto rule : a_rules) {
+		if (a_check(rule))
+			filtered.push_back(rule);
 	}
 
 	return filtered;

@@ -19,6 +19,11 @@ bool Conflict::With(Conflict a_other)
 		return true;
 	}
 
+	if (type == Type::HeavyBondage && a_other.type == Type::HeavyBondage) {
+		logger::info("Heavy bondage conflict");
+		return true;
+	}
+
 	if (type == Type::Outfit && a_other.type == Type::Outfit) {
 		return exclusive;
 	}
