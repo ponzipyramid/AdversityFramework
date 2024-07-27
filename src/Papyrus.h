@@ -245,34 +245,23 @@ namespace Adversity::Papyrus
 
 	std::vector<std::string> FilterRulesBySelectable(RE::StaticFunctionTag*, std::vector<std::string> a_rules)
 	{
-		std::unordered_set<Rule*> allowed;
-		const auto& active = Rules::Filter([&allowed](Rule* a_rule) {
+		const auto& active = Rules::Filter([](Rule* a_rule) {
 			const auto status{ a_rule->GetStatus() };
-
-			if (status == PackItem::Status::Reserved) {
-				logger::info("FilterRulesBySelectable - reserved = {}", a_rule->GetId());
-				allowed.insert(a_rule);
-				return true;
-			}
-
-			return status == PackItem::Status::Active; 
+			return status == PackItem::Status::Active || status == PackItem::Status::Reserved; 
 		});
-
 
 		const auto rules{ Rules::GetByIds(a_rules) };
 		const auto filtered{ 
-			Rules::Filter(rules, [&active, &allowed](Rule* a_rule) {
+			Rules::Filter(rules, [&active](Rule* a_rule) {
 				if (a_rule->GetStatus() == PackItem::Status::Disabled)
 					return false;
 
 				bool compatible = true;
 
 				for (auto rule : active) {
-					if (rule->Conflicts(a_rule) || ((rule->GetId() == a_rule->GetId() && rule->GetStatus() == PackItem::Status::Active))) {
+					if (rule->Conflicts(a_rule) || rule->GetId() == a_rule->GetId()) {
 						compatible = false;
 						break;
-					} else {
-						logger::info("{} is compatible with {}", a_rule->GetId(), rule->GetId());
 					}
 				}
 
