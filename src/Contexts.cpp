@@ -1,8 +1,6 @@
 #include "Contexts.h"
 #include "Packs.h"
 #include "Devices.h"
-#include "Outfits.h"
-#include "Tattoos.h"
 
 using namespace Adversity;
 
@@ -28,8 +26,6 @@ void Contexts::Init()
 
 		try {
 			Packs::Load(id);
-			Outfits::Load(id);
-			Tattoos::Load(id);
 			Devices::Load(id);
 
 			logger::info("loaded context {} successfully", id);

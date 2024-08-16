@@ -5,9 +5,9 @@
 
 using namespace Adversity;
 
-void Outfits::Load(std::string a_context)
+void Outfits::Load(std::string a_context, std::string a_pack)
 {
-	Util::ProcessEntities<Outfit>(a_context, "outfits", [&a_context](std::string a_id, Outfit a_outfit) {
+	Util::ProcessEntities<Outfit>(a_context, a_pack , "outfits", [&a_context](std::string a_id, Outfit a_outfit) {
 		a_outfit.id = a_id;
 
 		if (a_outfit.Validate()) {

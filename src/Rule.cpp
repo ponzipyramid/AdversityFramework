@@ -25,7 +25,8 @@ bool Conflict::With(Conflict a_other)
 	}
 
 	if (type == Type::Outfit && a_other.type == Type::Outfit) {
-		return exclusive;
+		logger::info("outfit conflict = {} {}", exclusive, a_other.exclusive);
+		return true;
 	}
 
 	return false;

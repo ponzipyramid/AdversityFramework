@@ -76,7 +76,7 @@ namespace Adversity
 	class Outfits
 	{
 	public:
-		static void Load(std::string a_context);
+		static void Load(std::string a_context, std::string a_pack);
 		static Outfit* GetOutfit(std::string a_context, std::string a_name);
 		static Outfit* GetOutfit(std::string a_id);
 		static Variant* GetVariant(std::string a_id);

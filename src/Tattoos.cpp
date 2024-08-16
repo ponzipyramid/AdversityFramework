@@ -3,9 +3,9 @@
 
 using namespace Adversity;
 
-void Tattoos::Load(std::string a_context)
+void Tattoos::Load(std::string a_context, std::string a_pack)
 {
-	Util::ProcessEntities<std::vector<Group>>(a_context, "tattoos", [](std::string a_id, std::vector<Group> a_group) {
+	Util::ProcessEntities<std::vector<Group>>(a_context, a_pack, "tattoos", [](std::string a_id, std::vector<Group> a_group) {
 		_groups.insert({ a_id, a_group });
 	});
 }

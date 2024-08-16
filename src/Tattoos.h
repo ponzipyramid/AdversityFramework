@@ -19,7 +19,7 @@ namespace Adversity
 	{
 
 	public:
-		static void Load(std::string a_context);
+		static void Load(std::string a_context, std::string a_pack);
 		static std::vector<Group*> GetGroups(std::string a_context, std::string a_name);
 	private:
 		static inline std::unordered_map<std::string, std::vector<Group>> _groups;

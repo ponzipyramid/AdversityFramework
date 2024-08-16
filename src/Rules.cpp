@@ -7,7 +7,10 @@ using namespace Adversity;
 void Rules::Load(std::string a_context, std::string a_pack, std::vector<Rule>& a_rules)
 {
 	for (auto& rule : a_rules) {
+
 		rule.Init(a_context, a_pack);
+
+		logger::info("loading rule {} {} {}", a_context, a_pack, rule.GetId());
 		
 		_rules[rule.GetId()] = rule;
 

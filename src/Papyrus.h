@@ -495,7 +495,7 @@ namespace Adversity::Papyrus
 	std::string GetEventDesc(RE::StaticFunctionTag*, std::string a_event)
 	{
 		if (const auto ev = Events::GetById(a_event)) {
-			return ev->GetName();
+			return ev->GetDesc().empty() ? ev->GetName() : ev->GetDesc();
 		} else {
 			logger::info("failed to find event {}", a_event);
 		}

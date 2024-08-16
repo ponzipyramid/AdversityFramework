@@ -47,9 +47,10 @@ namespace Adversity
 		}
 
 		template <typename T>
-		static inline void ProcessEntities(std::string a_context, std::string a_type, std::function<void(std::string, T)> a_func)
+		static inline void ProcessEntities(std::string a_context, std::string a_pack, std::string a_type, std::function<void(std::string, T)> a_func)
 		{
-			const std::string dir{ std::format("data/skse/adversityframework/contexts/{}/{}", a_context, a_type) };
+
+			const std::string dir{ std::format("data/skse/adversityframework/contexts/{}/packs/{}/{}", a_context, a_pack, a_type) };
 
 			if (!fs::is_directory(dir)) {
 				logger::warn("{} has no {} directory", a_context, a_type);

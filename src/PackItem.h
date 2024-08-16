@@ -39,11 +39,14 @@ namespace Adversity
 		inline void Init(std::string a_context, std::string a_pack)
 		{
 			if (_id.empty()) {
+
 				_context = a_context;
 
 				// pack id alr contains context
 				_packId = a_pack;
 				_id = std::format("{}/{}", a_pack, Util::Lower(_name));
+				logger::info("init {} {} {}", a_context, a_pack, _id);
+
 			}
 		}
 		inline std::string GetPackId() { return _packId; }

@@ -13,7 +13,7 @@ void Devices::Init()
 void Devices::Load(std::string a_context)
 {
 	const std::string base{ "data/skse/adversityframework" };
-	const std::string path{ a_context == "default" ? std::format("{}/devices.json", base) : std::format("{}/contexts/{}/devices.json", base, a_context) };
+	const std::string path{ a_context == "default" ? std::format("{}/devices.json", base) : std::format("{}/contexts/{}/Config/devices.json", base, a_context) };
 
 	if (!fs::exists(path)) {
 		logger::warn("{} context has no devices config", a_context);
