@@ -1,13 +1,13 @@
 #include "Outfits.h"
 #include "Util.h"
-#include "Rules.h"
+#include "Events.h"
 #include "Devices.h"
 
 using namespace Adversity;
 
 void Outfits::Load(std::string a_context, std::string a_pack)
 {
-	Util::ProcessEntities<Outfit>(a_context, a_pack , "outfits", [&a_context](std::string a_id, Outfit a_outfit) {
+	Util::ProcessEntities<Outfit>(a_context, a_pack, "outfits", [&a_context](std::string a_id, Outfit a_outfit) {
 		a_outfit.id = a_id;
 
 		if (a_outfit.Validate()) {
@@ -73,13 +73,15 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 		}
 	}
 
-	const auto& active = Rules::Filter([](Rule* a_rule) { return a_rule->GetStatus() == PackItem::Status::Active; });
+	const auto& active = Events::Filter([](Event* a_rule) { return a_rule->GetStatus() == Event::Status::Active; });
 	std::vector<RE::BGSKeyword*> allowedKwds{ Devices::GetLockableKwd() };
 	allowedKwds.reserve(active.size() + 1);
 	
 	for (auto rule : active) {
-		if (const auto kwd = rule->GetKwd())
+		const auto kwds = rule->GetKwds();
+		for (const auto kwd : kwds) {
 			allowedKwds.push_back(kwd);
+		}
 	}
 
 	logger::info("validating - START");

@@ -1,5 +1,4 @@
 #include "Packs.h"
-#include "Rules.h"
 #include "Events.h"
 #include "Outfits.h"
 #include "Tattoos.h"
@@ -15,7 +14,8 @@ void Packs::Load(std::string a_context)
 			continue;
 		}
 
-		const auto id{ a_context + '/' + Util::Lower(a.path().filename().replace_extension().string()) };
+		const auto packName { Util::Lower(a.path().filename().replace_extension().string()) };
+		const auto id{ a_context + '/' + packName };
 		
 		try {
 			const auto path{ a.path().string() + "/manifest.yaml" };
@@ -24,15 +24,13 @@ void Packs::Load(std::string a_context)
 
 			_packs.insert({ id, config.as<Pack>() });
 			auto& pack = _packs[id];
+			pack.Init(a_context, id);
 
 			_contexts[a_context].push_back(&pack);
 
-			logger::info("Processing {} {} {} - {} {}", a_context, id, path, pack.rules.size(), pack.events.size());
-
-			Rules::Load(a_context, id, pack.rules);
 			Events::Load(a_context, id, pack.events);
-			Outfits::Load(a_context, id);
-			Tattoos::Load(a_context, id);
+			Outfits::Load(a_context, packName);
+			Tattoos::Load(a_context, packName);
 		} catch (std::exception& e) {
 			logger::info("failed to load pack {} due to {}", id, e.what());
 		} catch (...) {

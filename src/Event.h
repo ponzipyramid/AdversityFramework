@@ -1,17 +1,87 @@
 #pragma once
 
-#include "PackItem.h"
+#include "Util.h"
 
 namespace Adversity
 {
-	class Event : public PackItem
+	struct Conflict
+	{
+		enum Type
+		{
+			Unknown,
+			Wear,
+			Naked,
+			Filth,
+			Outfit,
+			HeavyBondage,
+			Clean
+		};
+
+		Type type;
+		std::unordered_set<int> slots;
+		bool exclusive;
+		bool With(Conflict a_other);
+	};
+
+	class Event
 	{
 	public:
+		enum Status
+		{
+			Disabled,
+			Enabled,
+			Reserved,
+			Selected,
+			Paused,
+			Active
+		};
+
+		inline void Init(std::string a_context, std::string a_pack)
+		{
+			if (_id.empty()) {
+				_context = a_context;
+				_packId = a_pack;
+				_id = std::format("{}/{}", a_pack, Util::Lower(_name));
+			}
+		}
+		inline std::string GetPackId() { return _packId; }
+		inline std::string GetName() { return _name; }
+		inline std::string GetDesc() { return _desc; }
+		inline std::vector<std::string> GetTags() { return std::vector<std::string>{ _tags.begin(), _tags.end() }; }
+		inline std::string GetId() { return _id; }
+		inline std::string GetContext() { return _context; }
+		inline int GetSeverity() { return _severity; }
+		inline Status GetStatus() { return static_cast<Status>(_global->value); }
+		inline void SetStatus(Status a_status)
+		{
+			logger::info("setting {} to {}", _global->GetFormEditorID(), (int)a_status);
+			_global->value = (float)a_status;
+		}
+		bool HasTags(std::vector<std::string> a_tags, bool a_all);
+		bool HasTag(std::string a_tag);
+		bool Conflicts(Event* a_rule);
+		bool ReqsMet();
 		inline bool IsCooldownComplete() { return _timer->value <= Util::GetGameTime(); }
 		inline bool SetCooldown(float a_delta) { return _timer->value = Util::GetGameTime() + a_delta; }
 		inline bool IsExclusive() { return _exclusive; }
 		inline bool IsValid() { return !_name.empty() && _global; }
+		inline std::vector<RE::BGSKeyword*> GetKwds() { return _kwds; }
 	private:
+		std::string _id;
+		std::string _packId;
+		std::string _name;
+		RE::TESGlobal* _global = nullptr;
+		std::string _desc;
+		int _severity;
+		std::vector<Conflict> _conflicts;
+		std::unordered_set<std::string> _tags;
+		std::string _context;
+		std::vector<std::string> _reqs;
+		std::unordered_set<std::string> _excludes;
+		std::unordered_set<std::string> _compatible;
+		
+		std::vector<RE::BGSKeyword*> _kwds;
+
 		RE::TESGlobal* _timer;
 		bool _exclusive;
 
@@ -21,7 +91,7 @@ namespace Adversity
 
 namespace YAML
 {
-
+	using namespace Adversity;
 	template <>
 	struct convert<Event>
 	{
@@ -47,6 +117,13 @@ namespace YAML
 
 			const auto compatible = node["compatible"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs._compatible = std::unordered_set<std::string>{ compatible.begin(), compatible.end() };
+
+			const auto kwds = node["keywords"].as<std::vector<std::string>>(std::vector<std::string>{});
+			for (const auto kwdStr : kwds) {
+				if (const auto& kwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>(kwdStr)) {
+					rhs._kwds.push_back(kwd);
+				}
+			}
 
 			rhs._exclusive = node["exclusive"].as<std::string>("true") == "true";
 

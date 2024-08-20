@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Event.h"
-#include "Rule.h"
 #include "Util.h"
 
 namespace Adversity
@@ -25,7 +24,6 @@ namespace Adversity
 		inline RE::TESQuest* GetQuest() { return _quest; }
 		inline std::string GetId() { return _id; }
 		inline std::string GetName() { return _name; }
-		std::vector<Rule> rules;
 		std::vector<Event> events;
 	private:
 		std::string _id;
@@ -62,18 +60,13 @@ namespace YAML
 
 			auto questEdid = node["quest"].as<std::string>();
 			rhs._quest = RE::TESForm::LookupByEditorID<RE::TESQuest>(questEdid);
-			
-			const auto rules{ node["rules"].as<std::vector<Rule>>(std::vector<Rule>{}) };
-			std::copy_if(rules.begin(), rules.end(), std::back_inserter(rhs.rules), [](Rule a_rule) { 
-				return a_rule.IsValid(); 
-			});
 
 			const auto events{ node["events"].as<std::vector<Event>>(std::vector<Event>{}) };
 			std::copy_if(events.begin(), events.end(), std::back_inserter(rhs.events), [](Event a_event) {
 				return a_event.IsValid();
 			});
 
-			return !rhs._name.empty() && rhs._quest && (!rhs.rules.empty() || !rhs.events.empty());
+			return !rhs._name.empty() && rhs._quest && !rhs.events.empty();
 		}
 	};
 }
