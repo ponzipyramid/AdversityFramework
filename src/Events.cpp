@@ -65,3 +65,14 @@ std::vector<Event*> Events::Filter(std::function<bool(Event* a_event)> a_check)
 	return filtered;
 }
 
+std::vector<Event*> Events::Filter(std::vector<Event*> a_events, std::function<bool(Event* a_event)> a_check)
+{
+	std::vector<Event*> filtered;
+
+	for (auto& event : a_events) {
+		if (a_check(event))
+			filtered.push_back(event);
+	}
+
+	return filtered;
+}

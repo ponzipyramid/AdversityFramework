@@ -14,6 +14,7 @@ namespace Adversity
 		static std::vector<Event*> GetInPack(std::string a_pack);
 		static std::vector<std::string> GetIds(std::vector<Event*> a_Events);
 		static std::vector<Event*> Filter(std::function<bool(Event* a_Event)> a_check);
+		static std::vector<Event*> Filter(std::vector<Event*> a_events, std::function<bool(Event* a_Event)> a_check);
 	private:
 		static inline std::unordered_map<std::string, Event> _events;
 		static inline std::unordered_map<std::string, std::vector<Event*>> _contexts;

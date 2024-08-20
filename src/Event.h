@@ -72,7 +72,6 @@ namespace Adversity
 		std::string _name;
 		RE::TESGlobal* _global = nullptr;
 		std::string _desc;
-		int _severity;
 		std::vector<Conflict> _conflicts;
 		std::unordered_set<std::string> _tags;
 		std::string _context;
@@ -84,6 +83,7 @@ namespace Adversity
 
 		RE::TESGlobal* _timer;
 		bool _exclusive;
+		int _severity;
 
 		friend struct YAML::convert<Event>;
 	};
@@ -92,6 +92,21 @@ namespace Adversity
 namespace YAML
 {
 	using namespace Adversity;
+
+	template <>
+	struct convert<Conflict>
+	{
+		static bool decode(const Node& node, Conflict& rhs)
+		{
+			const auto type = node["type"].as<std::string>();
+			rhs.type = magic_enum::enum_cast<Conflict::Type>(type, magic_enum::case_insensitive).value_or(Conflict::Type::Unknown);
+			const auto slots = node["slots"].as<std::vector<int>>();
+			rhs.slots = std::unordered_set<int>{ slots.begin(), slots.end() };
+			rhs.exclusive = node["exclusive"].as<std::string>("") == "true";
+			return rhs.type != Conflict::Type::Unknown;
+		}
+	};
+
 	template <>
 	struct convert<Event>
 	{
@@ -124,6 +139,8 @@ namespace YAML
 					rhs._kwds.push_back(kwd);
 				}
 			}
+
+			rhs._conflicts = node["conflicts"].as<std::vector<Conflict>>(std::vector<Conflict>{});
 
 			rhs._exclusive = node["exclusive"].as<std::string>("true") == "true";
 

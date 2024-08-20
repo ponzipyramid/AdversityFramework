@@ -333,41 +333,33 @@ namespace Adversity::Papyrus
 		});
 	}
 
-	std::vector<RE::TESForm*> GetInventoryNamedObjects(RE::StaticFunctionTag*, RE::TESObjectREFR* a_container,
-		std::vector<std::string> itemNames)
+	std::vector<std::string> FilterEventsByConflict(RE::StaticFunctionTag*, std::vector<std::string> a_events)
 	{
-		std::vector<RE::TESForm*> refrs;
+		const auto& active = Events::Filter([](Event* a_rule) {
+			const auto status{ a_rule->GetStatus() };
+			return status == Event::Status::Active || status == Event::Status::Reserved;
+		});
 
-		if (!a_container) {
-			return refrs;
-		}
+		const auto events{ Events::GetByIds(a_events) };
+		const auto filtered{
+			Events::Filter(events, [&active](Event* a_rule) {
+				if (a_rule->GetStatus() == Event::Status::Disabled)
+					return false;
 
-		auto inventory = a_container->GetInventory();
-		for (const auto& [form, data] : inventory) {
-			if (!form->GetPlayable() || form->GetName()[0] == '\0')
-				continue;
-			if (data.second->IsQuestObject())
-				continue;
+				bool compatible = true;
 
-			std::string formName = form->GetName();
-			for (const auto& iName : itemNames) {
-				std::string itemName(iName);
-
-				std::transform(itemName.begin(), itemName.end(), itemName.begin(),
-					[](unsigned char c) { return (char) std::tolower(c); });
-
-				std::transform(formName.begin(), formName.end(), formName.begin(),
-					[](unsigned char c) { return (char) std::tolower(c); });
-
-				SKSE::log::info("Processing item {} with tag {}", formName, itemName);
-
-				if (formName.find(itemName) != std::string::npos) {
-					refrs.push_back(form);
+				for (auto rule : active) {
+					if (rule->Conflicts(a_rule) || rule->GetId() == a_rule->GetId()) {
+						compatible = false;
+						break;
+					}
 				}
-			}
-		}
 
-		return refrs;
+				return compatible;
+			})
+		};
+
+		return Events::GetIds(filtered);
 	}
 
 	inline bool RegisterFuncs(VM* a_vm)
@@ -381,7 +373,6 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetPackQuest)
 		REGISTERFUNC(GetPackEvents)
 		REGISTERFUNC(GetPackName)
-		
 
 		// events
 		REGISTERFUNC(GetEventName)
@@ -409,7 +400,6 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(SumArrays)
 		REGISTERFUNC(FilterByPrefix)
 		REGISTERFUNC(RemovePrefix)
-		REGISTERFUNC(GetInventoryNamedObjects)
 
 		// devices
 		REGISTERFUNC(GetDevicesByKeyword)

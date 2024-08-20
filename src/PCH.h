@@ -118,8 +118,8 @@ namespace fs = std::filesystem;
 
 namespace Adversity::Papyrus
 {
-#define REGISTERFUNC(func) a_vm->RegisterFunction(#func##sv, "AdversityFramework", func);
-#define REGISTERFUNCND(func) a_vm->RegisterFunction(#func##sv, "AdversityFramework", func, true);
+#define REGISTERFUNC(func) a_vm->RegisterFunction(#func##sv, "Adversity", func);
+#define REGISTERFUNCND(func) a_vm->RegisterFunction(#func##sv, "Adversity", func, true);
 
 	using VM = RE::BSScript::IVirtualMachine;
 	using StackID = RE::VMStackID;
