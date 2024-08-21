@@ -100,7 +100,7 @@ namespace YAML
 		{
 			const auto type = node["type"].as<std::string>();
 			rhs.type = magic_enum::enum_cast<Conflict::Type>(type, magic_enum::case_insensitive).value_or(Conflict::Type::Unknown);
-			const auto slots = node["slots"].as<std::vector<int>>();
+			const auto slots = node["slots"].as<std::vector<int>>(std::vector<int>{});
 			rhs.slots = std::unordered_set<int>{ slots.begin(), slots.end() };
 			rhs.exclusive = node["exclusive"].as<std::string>("") == "true";
 			return rhs.type != Conflict::Type::Unknown;
@@ -142,7 +142,7 @@ namespace YAML
 
 			rhs._conflicts = node["conflicts"].as<std::vector<Conflict>>(std::vector<Conflict>{});
 
-			rhs._exclusive = node["exclusive"].as<std::string>("true") == "true";
+			rhs._exclusive = node["exclusive"].as<std::string>("") == "true";
 
 			return true;
 		}
