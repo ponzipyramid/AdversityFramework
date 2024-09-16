@@ -48,7 +48,7 @@ namespace Adversity
 		inline std::string GetName() { return _name; }
 		inline std::string GetDesc() { return _desc; }
 		inline std::vector<std::string> GetTags() { return std::vector<std::string>{ _tags.begin(), _tags.end() }; }
-		inline std::string GetId() { return _id; }
+		inline std::string GetId() const { return _id; }
 		inline std::string GetContext() { return _context; }
 		inline int GetSeverity() { return _severity; }
 		inline Status GetStatus() { return static_cast<Status>(_global->value); }
@@ -57,8 +57,8 @@ namespace Adversity
 			logger::info("setting {} to {}", _global->GetFormEditorID(), (int)a_status);
 			_global->value = (float)a_status;
 		}
-		bool HasTags(std::vector<std::string> a_tags, bool a_all);
-		bool HasTag(std::string a_tag);
+		bool HasTags(std::vector<std::string> a_tags, bool a_all) const;
+		bool HasTag(std::string a_tag) const;
 		bool Conflicts(Event* a_rule);
 		bool ReqsMet();
 		inline bool IsCooldownComplete() { return _timer->value <= Util::GetGameTime(); }

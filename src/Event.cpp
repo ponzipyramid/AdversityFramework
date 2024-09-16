@@ -2,7 +2,7 @@
 
 using namespace Adversity;
 
-bool Event::HasTags(std::vector<std::string> a_tags, bool a_all)
+bool Event::HasTags(std::vector<std::string> a_tags, bool a_all) const
 {
 	if (a_all) {
 		for (const auto& tag : a_tags) {
@@ -21,7 +21,7 @@ bool Event::HasTags(std::vector<std::string> a_tags, bool a_all)
 	}
 }
 
-bool Event::HasTag(std::string a_tag)
+bool Event::HasTag(std::string a_tag) const
 {
 	return _tags.contains(a_tag);
 }
