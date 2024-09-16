@@ -6,6 +6,7 @@
 #include "Outfits.h"
 #include "Tattoos.h"
 #include "Events.h"
+#include "Actors.h"
 
 namespace
 {
@@ -361,6 +362,48 @@ namespace Adversity::Papyrus
 
 		return Events::GetIds(filtered);
 	}
+	inline std::vector<int> SelectEvent(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::vector<std::string> a_events, int a_weight, bool a_considerDislikes, bool a_stack)
+	{
+		const auto traits = Actors::GetTraits(a_context, a_actor);
+		std::vector<int> weights;
+		for (const auto& id : a_events) {
+			int weight = 0;
+			
+			if (const auto ev = Events::GetById(id)) {
+				for (const auto& trait : traits) {
+					if (const auto pref = trait->Prefers(ev)) {
+						if (pref > 0 || a_considerDislikes) {
+							weight += a_weight * pref;
+							if (!a_stack) {
+								break;
+							}
+						}
+					}
+				}
+			}
+
+			weights.push_back(weight);
+		}
+
+		return weights;
+	}
+	inline std::vector<std::string> GetTraits(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor)
+	{
+		return Actors::GetTraitIds(a_context, a_actor);
+	}
+
+	inline std::string GetActorString(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, std::string a_default)
+	{
+		return Actors::GetValue<std::string>(a_context, a_actor, a_key, a_default);
+	}
+	inline bool GetActorBool(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, bool a_default)
+	{
+		return Actors::GetValue<bool>(a_context, a_actor, a_key, a_default);
+	}
+	inline void SetActorBool(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, bool a_val, bool a_persist)
+	{
+		Actors::SetValue<bool>(a_context, a_actor, a_key, a_val, a_persist);
+	}
 
 	inline bool RegisterFuncs(VM* a_vm)
 	{	
@@ -412,6 +455,11 @@ namespace Adversity::Papyrus
 		// tattoos
 		REGISTERFUNC(GetNumGroups)
 		REGISTERFUNC(GetTattooGroup)
+
+		// actors
+		REGISTERFUNC(GetActorString)
+		REGISTERFUNC(GetActorBool)
+		REGISTERFUNC(SetActorBool)
 
 		return true;
 	}

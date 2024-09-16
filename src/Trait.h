@@ -22,8 +22,13 @@ namespace Adversity
 		inline std::string GetID() const { return _id; }
 		inline std::string const GetName() const { return _name; }
 		inline RE::TESFaction* const GetFaction() const { return _faction; }
-		inline bool Likes(const Event* a_event) const { return Prefers(a_event, _eventTags.likes, _eventNames.likes); }
-		inline bool Dislikes(const Event* a_event) const { return Prefers(a_event, _eventTags.dislikes, _eventNames.dislikes); }
+		inline int Prefers(const Event* a_event) const {
+			if (Prefers(a_event, _eventTags.likes, _eventNames.likes))
+				return 1;
+			if (Prefers(a_event, _eventTags.dislikes, _eventNames.dislikes))
+				return -1;
+			return 0;
+		}
 	private:
 		inline bool Prefers(const Event* a_event, const std::vector<std::string>& a_tags, const std::unordered_set<std::string>& a_names) const
 		{

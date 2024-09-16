@@ -5,6 +5,8 @@ using namespace Adversity;
 
 void Actors::Load(std::string a_context)
 {
+	_locks[a_context];
+
 	const std::string base{ std::format("Data/SKSE/AdversityFramework/Contexts/{}/Actors", a_context) };
 	const std::string actors{ base + "/data.yaml" };
 
@@ -28,9 +30,9 @@ void Actors::Load(std::string a_context)
 
 			_traits[a_context].insert({ id, config.as<Trait>() });
 		} catch (std::exception& e) {
-			logger::info("failed to load pack {} due to {}", id, e.what());
+			logger::info("failed to load actor data {}", id, e.what());
 		} catch (...) {
-			logger::info("failed to load pack {}", id);
+			logger::info("failed to load actor data {}", id);
 		}
 	}
 }

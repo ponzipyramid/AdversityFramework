@@ -2,6 +2,7 @@
 #include "Contexts.h"
 #include "Willpower.h"
 #include "Devices.h"
+#include "Saves.h"
 
 using namespace Adversity;
 
@@ -38,6 +39,13 @@ void Listener(SKSE::MessagingInterface::Message* message) noexcept
 	}
 }
 
+void InitializeSerialization()
+{
+	const auto serialization = SKSE::GetSerializationInterface();
+	serialization->SetUniqueID(Saves::RecordName);
+	serialization->SetSaveCallback(Saves::Save);
+}
+
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
 {
 	InitializeLog();
@@ -46,6 +54,8 @@ extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_s
 
 	const auto papyrus = SKSE::GetPapyrusInterface();
 	papyrus->Register(Papyrus::RegisterFuncs);
+
+	InitializeSerialization();
 
 	if (const auto messaging{ SKSE::GetMessagingInterface() }; !messaging->RegisterListener(Listener))
 		return false;
