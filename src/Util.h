@@ -111,6 +111,49 @@ namespace Adversity
 				a_form->AddKeyword(kwd);
 			}
 		}
+
+		static inline std::optional<std::pair<RE::FormID, std::string>> ParseFormId(std::string a_str)
+		{
+			const auto splits = Split(a_str, "|");
+
+			if (splits.size() != 2) {
+				return std::nullopt;
+			}
+
+			char* p;
+			const auto formId = std::strtol(splits[0].c_str(), &p, 16);
+
+			if (*p != 0) {
+				return std::nullopt;
+			}
+
+			const auto espName = std::regex_replace(splits[1], std::regex("^ +| +$|( ) +"), "$1");
+
+			return std::make_pair(formId, espName);
+		}
+
+
+		template <typename T = RE::TESForm>
+		static inline T* GetFormFromString(const std::string& s)
+		{
+			if (auto form = RE::TESForm::LookupByEditorID(s)) {
+				return form->As<T>();
+			}
+
+			if (const auto parsed = ParseFormId(s)) {
+				const auto [formId, espName] = parsed.value();
+				return RE::TESDataHandler::GetSingleton()->LookupForm<T>(formId, espName);
+			} else {
+				return nullptr;
+			}
+		}
+
+		static inline bool IsNumeric(std::string a_str)
+		{
+			static const std::regex pattern(R"(^[+-]?(?:\d+|\d*\.\d+)$)");
+			return std::regex_match(a_str, pattern);
+		}
+
 	private:
 		static inline const std::unordered_set<std::string> _exts{ ".yaml", ".yml" };
 	};

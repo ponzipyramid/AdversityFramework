@@ -22,19 +22,23 @@ namespace Adversity
 		inline std::string GetID() const { return _id; }
 		inline std::string const GetName() const { return _name; }
 		inline RE::TESFaction* const GetFaction() const { return _faction; }
-		inline bool Likes(const Event* a_event) const
+		inline bool Likes(const Event* a_event) const { return Prefers(a_event, _eventTags.likes, _eventNames.likes); }
+		inline bool Dislikes(const Event* a_event) const { return Prefers(a_event, _eventTags.dislikes, _eventNames.dislikes); }
+	private:
+		inline bool Prefers(const Event* a_event, const std::vector<std::string>& a_tags, const std::unordered_set<std::string>& a_names) const
 		{
-			if (_eventNames.likes.contains(a_event->GetId()))
+			if (a_names.contains(a_event->GetId()))
 				return true;
 
-			for (const auto& tag : _eventTags.likes) {
+			for (const auto& tag : a_tags) {
 				if (a_event->HasTag(tag)) {
 					return true;
 				}
 			}
+
+			return false;
 		}
 
-	private:
 		std::string _id;
 		std::string _name;
 		RE::TESFaction* _faction;
@@ -61,7 +65,7 @@ namespace YAML
 		}
 	};
 
-	void FilterPreferences(std::vector<std::string> a_prefs, std::vector<std::string>& a_tags, std::unordered_set<std::string>& a_names)
+	inline void FilterPreferences(std::vector<std::string> a_prefs, std::vector<std::string>& a_tags, std::unordered_set<std::string>& a_names)
 	{
 		for (const auto& pref : a_prefs) {
 			if (pref.starts_with("tag:")) {
