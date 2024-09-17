@@ -29,9 +29,11 @@ namespace Adversity
 				return traits;
 
 			if (const auto base = a_actor->GetActorBase()) {
-				for (auto traitId : _actors[a_context][base->GetFormEditorID()].GetTraits()) {
-					if (_traits[a_context].count(traitId)) {
-						traits.push_back(traitId);
+				if (_actors[a_context].count(base->GetName())) {
+					for (auto traitId : _actors[a_context][base->GetName()].GetTraits()) {
+						if (_traits[a_context].count(traitId)) {
+							traits.push_back(traitId);
+						}
 					}
 				}
 			}
@@ -43,8 +45,7 @@ namespace Adversity
 		static T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
 		{
 			if (const auto data = Actors::GetData(a_context, a_actor, a_key)) {
-				if constexpr (std::same_as<T, decltype(data)>) {
-					// do stuff with value as an int since it's a int here
+				if (std::holds_alternative<T>(*data)) {
 					return std::get<T>(*data);
 				} else {
 					return a_default;
@@ -91,8 +92,10 @@ namespace Adversity
 		static inline GenericData* GetData(std::string a_context, RE::Actor* a_actor, std::string a_key)
 		{
 			if (const auto base = a_actor->GetActorBase()) {
-				const auto id = base->GetFormEditorID();
-				_actors[a_context][id].GetValue(a_key);
+				const auto id = base->GetName();
+				if (_actors[a_context].count(id)) {
+					return _actors[a_context][id].GetValue(a_key);
+				} 
 			}
 
 			return nullptr;
@@ -100,7 +103,7 @@ namespace Adversity
 		static inline void SetData(std::string a_context, RE::Actor* a_actor, std::string a_key, GenericData a_data, bool a_persist)
 		{
 			if (const auto base = a_actor->GetActorBase()) {
-				const auto id = base->GetFormEditorID();
+				const auto id = base->GetName();
 				_actors[a_context][id].SetValue(a_key, a_data);
 			}
 

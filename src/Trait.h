@@ -2,30 +2,50 @@
 
 #include "Event.h"
 
+namespace
+{
+	inline void FilterPreferences(std::string a_context, std::vector<std::string> a_prefs, std::vector<std::string>& a_tags, std::unordered_set<std::string>& a_names)
+	{
+		for (const auto& pref : a_prefs) {
+			if (pref.starts_with("tag:")) {
+				a_tags.push_back(pref);
+			} else {
+				a_names.insert(a_context + "/" + pref);
+			}
+		}
+	}
+}
+
 namespace Adversity
 {
 	struct PreferenceList
 	{
-		std::vector<std::string> likes;
-		std::vector<std::string> dislikes;
+		std::vector<std::string> like;
+		std::vector<std::string> dislike;
 	};
 
 	struct PreferenceSet
 	{
-		std::unordered_set<std::string> likes;
-		std::unordered_set<std::string> dislikes;
+		std::unordered_set<std::string> like;
+		std::unordered_set<std::string> dislike;
 	};
 
 	class Trait
 	{
 	public:
+		inline void Init(std::string a_context, std::string a_id)
+		{
+			_id = a_id;
+			FilterPreferences(a_context, _eventPrefs.like, _eventTags.like, _eventNames.like);
+			FilterPreferences(a_context, _eventPrefs.dislike, _eventTags.dislike, _eventNames.dislike);
+		}
 		inline std::string GetID() const { return _id; }
 		inline std::string const GetName() const { return _name; }
 		inline RE::TESFaction* const GetFaction() const { return _faction; }
 		inline int Prefers(const Event* a_event) const {
-			if (Prefers(a_event, _eventTags.likes, _eventNames.likes))
+			if (Prefers(a_event, _eventTags.like, _eventNames.like))
 				return 1;
-			if (Prefers(a_event, _eventTags.dislikes, _eventNames.dislikes))
+			if (Prefers(a_event, _eventTags.dislike, _eventNames.dislike))
 				return -1;
 			return 0;
 		}
@@ -46,7 +66,9 @@ namespace Adversity
 
 		std::string _id;
 		std::string _name;
+		std::string _context;
 		RE::TESFaction* _faction;
+		PreferenceList _eventPrefs;
 		PreferenceSet _eventNames;
 		PreferenceList _eventTags;
 
@@ -63,23 +85,12 @@ namespace YAML
 	{
 		static bool decode(const Node& node, PreferenceList& rhs)
 		{
-			rhs.likes = node["likes"].as<std::vector<std::string>>(std::vector<std::string>{});
-			rhs.dislikes = node["dislikes"].as<std::vector<std::string>>(std::vector<std::string>{});
+			rhs.like = node["like"].as<std::vector<std::string>>(std::vector<std::string>{});
+			rhs.dislike = node["dislike"].as<std::vector<std::string>>(std::vector<std::string>{});
 
 			return true;
 		}
 	};
-
-	inline void FilterPreferences(std::vector<std::string> a_prefs, std::vector<std::string>& a_tags, std::unordered_set<std::string>& a_names)
-	{
-		for (const auto& pref : a_prefs) {
-			if (pref.starts_with("tag:")) {
-				a_tags.push_back(pref);
-			} else {
-				a_names.insert(pref);
-			}
-		}
-	}
 
 	template <>
 	struct convert<Trait>
@@ -91,9 +102,7 @@ namespace YAML
 			const auto faction = node["faction"].as<std::string>("");
 			rhs._faction = RE::TESForm::LookupByEditorID<RE::TESFaction>(faction);
 
-			const auto eventPrefs = node["events"].as<PreferenceList>(PreferenceList{});
-			FilterPreferences(eventPrefs.likes, rhs._eventTags.likes, rhs._eventNames.likes);
-			FilterPreferences(eventPrefs.dislikes, rhs._eventTags.dislikes, rhs._eventNames.dislikes);
+			rhs._eventPrefs = node["events"].as<PreferenceList>(PreferenceList{});
 
 			return true;
 		}

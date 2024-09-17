@@ -6,6 +6,7 @@ using namespace Adversity;
 void Actors::Load(std::string a_context)
 {
 	_locks[a_context];
+	_actors[a_context];
 
 	const std::string base{ std::format("Data/SKSE/AdversityFramework/Contexts/{}/Actors", a_context) };
 	const std::string actors{ base + "/data.yaml" };
@@ -27,8 +28,10 @@ void Actors::Load(std::string a_context)
 		try {
 			const auto path{ a.path().string() };
 			auto config = YAML::LoadFile(path);
+			auto trait = config.as<Trait>();
+			trait.Init(a_context, id);
 
-			_traits[a_context].insert({ id, config.as<Trait>() });
+			_traits[a_context].insert({ trait.GetID(), trait });
 		} catch (std::exception& e) {
 			logger::info("failed to load actor data {}", id, e.what());
 		} catch (...) {

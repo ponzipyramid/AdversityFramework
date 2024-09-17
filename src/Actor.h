@@ -21,14 +21,22 @@ namespace Adversity
 	class Actor
 	{
 	public:
-		inline std::string GetId() const { return _base->GetFormEditorID(); }
+		inline std::string GetId() const { return _base->GetName(); }
 		inline std::vector<std::string> GetTraits() { return _traits; }
-		inline GenericData* GetValue(std::string a_key) { return _data.count(a_key) ? &_data[a_key].second : nullptr; }
+		inline GenericData* GetValue(std::string a_key) { 
+			a_key = Util::Lower(a_key);
+			if (_data.count(a_key)) {
+				return &_data[a_key].second;
+			}
+		
+			return nullptr;
+		}
 		inline bool SetValue(std::string a_key, GenericData a_value)
 		{ 
 			if (_data.count(a_key)) {
 
 				std::vector<std::string> raw;
+
 
 				switch (a_value.index())
 				{
@@ -161,8 +169,14 @@ namespace YAML
 	{
 		static bool decode(const Node& node, Actor& rhs)
 		{
-			rhs._base = RE::TESForm::LookupByEditorID<RE::TESNPC>(node["id"].as<std::string>(""));
-			rhs._traits = node["id"].as<std::vector<std::string>>(std::vector<std::string>{});
+			const auto id = node["id"].as<std::string>("");
+			rhs._base = RE::TESForm::LookupByEditorID<RE::TESNPC>(id);
+
+			const auto traits = node["traits"].as<std::vector<std::string>>(std::vector<std::string>{});
+			for (const auto& trait : traits) {
+				rhs._traits.push_back(Util::Lower(trait));
+			}
+
 			const auto data = node["data"];
 			
 			for (YAML::const_iterator it = data.begin(); it != data.end(); ++it) {
@@ -210,12 +224,12 @@ namespace YAML
 							break;
 						}
 					}
-					
-
+				
 					rhs._data[key] = std::make_pair(rawValues, values);
 				} else {
 					const auto rawValue = it->second.as<std::string>("");
-					rhs._data[key] = std::make_pair(std::vector<std::string>{ rawValue }, ConvertToGeneric(rawValue));
+					const auto value = ConvertToGeneric(rawValue);
+					rhs._data[key] = std::make_pair(std::vector<std::string>{ rawValue }, value);
 				}
 			}
 

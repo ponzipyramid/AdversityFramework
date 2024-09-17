@@ -54,7 +54,6 @@ namespace Adversity
 		inline Status GetStatus() { return static_cast<Status>(_global->value); }
 		inline void SetStatus(Status a_status)
 		{
-			logger::info("setting {} to {}", _global->GetFormEditorID(), (int)a_status);
 			_global->value = (float)a_status;
 		}
 		bool HasTags(std::vector<std::string> a_tags, bool a_all) const;

@@ -101,6 +101,14 @@ namespace Adversity
 			return v;
 		}
 
+		static inline std::string Join(const std::vector<std::string>& a_vec, std::string_view a_delimiter)
+		{
+			return std::accumulate(a_vec.begin(), a_vec.end(), std::string{},
+				[a_delimiter](const auto& str1, const auto& str2) {
+					return str1.empty() ? str2 : str1 + a_delimiter.data() + str2;
+				});
+		}
+
 		static inline float GetGameTime()
 		{
 			return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(0x39, "Skyrim.esm")->value;
