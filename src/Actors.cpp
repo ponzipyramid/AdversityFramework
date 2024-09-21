@@ -11,6 +11,11 @@ void Actors::Load(std::string a_context)
 	const std::string base{ std::format("Data/SKSE/AdversityFramework/Contexts/{}/Actors", a_context) };
 	const std::string actors{ base + "/data.yaml" };
 
+	if (!fs::exists(actors)) {
+		logger::info("{} - no actors config - skipping", a_context);
+		return;
+	}
+
 	const auto actorFile = YAML::LoadFile(actors);
 	const auto actorData = actorFile.as<std::vector<Actor>>();
 	for (const auto& actor : actorData) {

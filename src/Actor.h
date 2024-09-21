@@ -34,10 +34,7 @@ namespace Adversity
 		inline bool SetValue(std::string a_key, GenericData a_value)
 		{ 
 			if (_data.count(a_key)) {
-
 				std::vector<std::string> raw;
-
-
 				switch (a_value.index())
 				{
 				case 0:
@@ -110,7 +107,7 @@ namespace Adversity
 					break;
 				}
 
-				_data[a_key] = std::make_pair(std::vector<std::string>{}, a_value);
+				_data[a_key] = std::make_pair(raw, a_value);
 				return true;
 			} else {
 				return false;
@@ -180,7 +177,7 @@ namespace YAML
 			const auto data = node["data"];
 			
 			for (YAML::const_iterator it = data.begin(); it != data.end(); ++it) {
-				const auto key = it->first.as<std::string>();
+				const auto key = Util::Lower(it->first.as<std::string>());
 
 				if (it->second.IsSequence()) {
 					const auto rawValues = it->second.as<std::vector<std::string>>(std::vector<std::string>{});
@@ -244,7 +241,11 @@ namespace YAML
 			node["traits"] = rhs._traits;
 
 			for (const auto& [key, value] : rhs._data) {
-				node["data"][key] = value.first;
+				if (value.first.size() > 1) {
+					node["data"][key] = value.first;
+				} else {
+					node["data"][key] = value.first.empty() ? "" : value.first[0];
+				}
 			}
 
 			return node;

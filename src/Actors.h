@@ -44,7 +44,9 @@ namespace Adversity
 		template <typename T>
 		static T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
 		{
+			logger::info("looking for {} on {}", a_key, a_actor->GetActorBase()->GetName());
 			if (const auto data = Actors::GetData(a_context, a_actor, a_key)) {
+				logger::info("found data {} on {}", a_key, a_actor->GetActorBase()->GetName());
 				if (std::holds_alternative<T>(*data)) {
 					return std::get<T>(*data);
 				} else {
