@@ -3,10 +3,10 @@
 
 using namespace Adversity;
 
-void Events::Load(std::string a_context, std::string a_pack, std::vector<Event>& a_events)
+void Events::Load(std::string a_context, std::string a_pack, std::vector<Event>& a_events, ConditionParser::RefMap& a_refs)
 {
 	for (auto& event : a_events) {
-		event.Init(a_context, a_pack);
+		event.Init(a_context, a_pack, a_refs);
 		_events[event.GetId()] = event;
 
 		auto ref = GetById(event.GetId());

@@ -125,4 +125,6 @@ namespace Adversity::Papyrus
 	using StackID = RE::VMStackID;
 }
 
+#include <srell.hpp>
+
 #define DLLEXPORT __declspec(dllexport)

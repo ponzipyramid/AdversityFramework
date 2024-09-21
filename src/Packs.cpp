@@ -28,7 +28,9 @@ void Packs::Load(std::string a_context)
 
 			_contexts[a_context].push_back(&pack);
 
-			Events::Load(a_context, id, pack.events);
+			auto refMap = ConditionParser::GenerateRefMap(config["refMap"].as<std::unordered_map<std::string, std::string>>(std::unordered_map<std::string, std::string>{}));
+
+			Events::Load(a_context, id, pack.events, refMap);
 			Outfits::Load(a_context, packName);
 			Tattoos::Load(a_context, packName);
 		} catch (std::exception& e) {

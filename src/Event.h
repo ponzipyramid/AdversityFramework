@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Util.h"
+#include "Conditions/Conditional.h"
+
+using namespace Conditions;
 
 namespace Adversity
 {
@@ -23,7 +26,7 @@ namespace Adversity
 		bool With(Conflict a_other);
 	};
 
-	class Event
+	class Event : public Conditional
 	{
 	public:
 		enum Status
@@ -36,13 +39,17 @@ namespace Adversity
 			Active
 		};
 
-		inline void Init(std::string a_context, std::string a_pack)
+		inline void Init(std::string a_context, std::string a_pack, ConditionParser::RefMap a_refMap)
 		{
 			if (_id.empty()) {
 				_context = a_context;
 				_packId = a_pack;
 				_id = std::format("{}/{}", a_pack, Util::Lower(_name));
 			}
+
+			InitConditions(_rawConditions, a_refMap);
+
+			_rawConditions.clear();
 		}
 		inline std::string GetPackId() { return _packId; }
 		inline std::string GetName() { return _name; }
@@ -77,6 +84,8 @@ namespace Adversity
 		std::vector<std::string> _reqs;
 		std::unordered_set<std::string> _excludes;
 		std::unordered_set<std::string> _compatible;
+
+		std::vector<std::string> _rawConditions;
 		
 		std::vector<RE::BGSKeyword*> _kwds;
 
@@ -142,6 +151,8 @@ namespace YAML
 			rhs._conflicts = node["conflicts"].as<std::vector<Conflict>>(std::vector<Conflict>{});
 
 			rhs._exclusive = node["exclusive"].as<std::string>("") == "true";
+
+			rhs._rawConditions = node["conditions"].as<std::vector<std::string>>(std::vector<std::string>{});
 
 			return true;
 		}

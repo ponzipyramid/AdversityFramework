@@ -7,7 +7,7 @@ namespace Adversity
 	class Events
 	{
 	public:
-		static void Load(std::string a_context, std::string a_pack, std::vector<Event>& a_events);
+		static void Load(std::string a_context, std::string a_pack, std::vector<Event>& a_events, ConditionParser::RefMap& a_refs);
 		static Event* GetById(std::string a_id);
 		static std::vector<Event*> GetByIds(std::vector<std::string> a_ids);
 		static std::vector<Event*> GetInContext(std::string a_context);

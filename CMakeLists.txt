@@ -32,11 +32,13 @@ find_package(xbyak CONFIG REQUIRED)
 find_package(yaml-cpp REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
 find_path(CLIB_UTIL_INCLUDE_DIRS "ClibUtil/utils.hpp")
+find_path(SRELL_INCLUDE_DIRS "srell.hpp")
 
 target_include_directories(
 	${PROJECT_NAME}
 	PRIVATE
 	${CLIB_UTIL_INCLUDE_DIRS}
+	${SRELL_INCLUDE_DIRS}
 )
 
 target_link_libraries(

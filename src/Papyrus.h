@@ -334,18 +334,27 @@ namespace Adversity::Papyrus
 		});
 	}
 
-	std::vector<std::string> FilterEventsByConflict(RE::StaticFunctionTag*, std::vector<std::string> a_events)
+	std::vector<std::string> FilterEventsByValid(RE::StaticFunctionTag*, std::vector<std::string> a_events, RE::Actor* a_target)
 	{
 		const auto& active = Events::Filter([](Event* a_rule) {
 			const auto status{ a_rule->GetStatus() };
 			return status == Event::Status::Active || status == Event::Status::Reserved;
 		});
 
+		const auto player = RE::PlayerCharacter::GetSingleton();
+
 		const auto events{ Events::GetByIds(a_events) };
 		const auto filtered{
-			Events::Filter(events, [&active](Event* a_rule) {
+			Events::Filter(events, [&active, &player, &a_target](Event* a_rule) {
 				if (a_rule->GetStatus() == Event::Status::Disabled)
 					return false;
+
+				if (!a_rule->ReqsMet())
+					return false;
+
+				if (!a_rule->ConditionsMet(player, a_target)) {
+					return false;
+				}
 
 				bool compatible = true;
 
@@ -429,6 +438,7 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(FilterEventsByStatus)
 		REGISTERFUNC(FilterEventsBySeverity)
 		REGISTERFUNC(FilterEventsByTags)
+		REGISTERFUNC(FilterEventsByValid)
 		REGISTERFUNC(WeighEventsByActor)
 
 		// willpower 
