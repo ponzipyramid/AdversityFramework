@@ -372,7 +372,7 @@ namespace Adversity::Papyrus
 		return Events::GetIds(filtered);
 	}
 	inline std::vector<int> WeighEventsByActor(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::vector<std::string> a_events, int a_weight, bool a_considerDislikes, bool a_stack)
-	{		
+	{
 		const auto traits = Actors::GetTraits(a_context, a_actor);
 		std::vector<int> weights;
 		for (const auto& id : a_events) {
