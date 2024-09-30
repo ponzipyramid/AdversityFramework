@@ -63,7 +63,7 @@ namespace YAML
 	{
 		static bool decode(const Node& node, Context& rhs)
 		{
-			rhs._events = node["events"].as<Metadata>();
+			rhs._events = node["events"].as<Metadata>(Metadata{});
 			return true;
 		}
 

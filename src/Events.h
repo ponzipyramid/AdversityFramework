@@ -20,6 +20,9 @@ namespace Adversity
 		template <typename T>
 		static T GetValue(const std::string& a_id, const std::string& a_key, T a_default, bool a_persist)
 		{
+
+			logger::info("GetValue - {} {} {}", a_id, a_key, a_persist);
+
 			if (const auto data = Contexts::GetEventValue<T>(a_id, a_key, a_persist)) {
 				return data.value();
 			}
@@ -31,6 +34,7 @@ namespace Adversity
 		template <typename T>
 		static bool SetValue(std::string a_id, std::string a_key, T a_val, bool a_persist)
 		{
+			logger::info("SetValue - {} {} {}", a_id, a_key, a_persist);
 			return Contexts::SetEventValue<T>(a_id, a_key, a_val, a_persist);
 		}
 

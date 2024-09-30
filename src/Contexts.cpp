@@ -30,7 +30,7 @@ void Contexts::Init()
 		try {
 			if (fs::exists(userData)) {
 				logger::info("loading user data for {}", id);
-				auto context = YAML::Load(userData).as<Context>();
+				auto context = YAML::LoadFile(userData).as<Context>();
 				context.Init(id);
 				_persistent[id] = context;
 				_dirty[id] = false;
@@ -53,15 +53,16 @@ void Contexts::Init()
 
 Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist)
 {
-	const auto splits = Util::Split(a_id, "/");
+	const auto id = Util::Lower(a_id);
+	const auto splits = Util::Split(id, "/");
 
 	if (splits.size() != 3)
 		return nullptr;
 
 	auto& data = a_persist ? _persistent : _runtime;
 
-	if (data.count(splits[1])) {
-		auto& context = data[a_id];
+	if (data.count(splits[0])) {
+		auto& context = data[splits[0]];
 		return context.GetEventData(splits[1], splits[2]);
 	}
 
@@ -70,8 +71,10 @@ Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist)
 
 GenericData* Contexts::GetEventField(const std::string& a_id, const std::string& a_key, bool a_persist)
 {
+	const auto key = Util::Lower(a_key);
+
 	if (const auto& data = GetEventData(a_id, a_persist)) {
-		return data->GetValue(a_key);
+		return data->GetValue(key);
 	}
 
 	return nullptr;
@@ -86,8 +89,11 @@ void Contexts::Persist(const std::string& a_id)
 
 	auto context = _persistent[a_id];
 
+
 	YAML::Node node{ context };
 	const std::string file{ std::format("Data/SKSE/AdversityFramework/UserData/{}.yaml", a_id) };
+
+	logger::info("persisting context: {} {}", a_id, file);
 
 	std::ofstream fout(file);
 	fout << node;

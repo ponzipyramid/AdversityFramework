@@ -120,7 +120,7 @@ namespace Adversity::Papyrus
 {
 #define EVENTCONFIG(name, type)                                                                                                              \
 	inline type GetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_default, bool a_persist)             \
-	{                                                                                                                                            \
+	{                                                                                                                               \
 		return Events::GetValue<type>(a_id, a_key, a_default, a_persist);                                                                     \
 	}                                                                                                                                            \
 	inline bool SetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_val, bool a_persist) \
@@ -150,8 +150,8 @@ namespace Adversity::Papyrus
 							REGISTERFUNC(SetActor##name)
 
 #define REGISTEREVENT(name) \
-	REGISTERFUNC(GetActor##name)  \
-	REGISTERFUNC(SetActor##name)\
+	REGISTERFUNC(GetEvent##name)  \
+	REGISTERFUNC(SetEvent##name)\
 
 
 #define REGISTERCONFIG(configType)\

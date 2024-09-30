@@ -7,7 +7,7 @@ namespace Adversity::Saves
 {
 	inline const auto RecordName = _byteswap_ulong('ADVY');
 
-	inline void Save(SKSE::SerializationInterface* a_intfc) { 
+	inline void Save(SKSE::SerializationInterface* a_intfc) {
 		Actors::PersistAll();
 		Contexts::PersistAll();
 

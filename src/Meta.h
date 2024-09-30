@@ -7,6 +7,7 @@
 namespace Adversity
 {
 	using GenericData = std::variant<
+		std::monostate,
 		bool,
 		int,
 		float,
@@ -99,36 +100,42 @@ namespace Adversity
 		}
 		inline bool SetValue(std::string a_key, GenericData a_value)
 		{
+			a_key = Util::Lower(a_key);
 			if (_data.count(a_key)) {
 				std::vector<std::string> raw;
 				switch (a_value.index()) {
-				case 0:
+				case 0: 
+					{
+						raw.push_back("");
+						break;
+					}	
+				case 1:
 					{
 						raw.push_back(std::to_string(std::get<bool>(a_value)));
 						break;
 					}
-				case 1:
+				case 2:
 					{
 						raw.push_back(std::to_string(std::get<int>(a_value)));
 						break;
 					}
-				case 2:
+				case 3:
 					{
 						raw.push_back(std::to_string(std::get<float>(a_value)));
 						break;
 					}
-				case 3:
+				case 4:
 					{
 						raw.push_back(std::get<std::string>(a_value));
 						break;
 					}
-				case 4:
+				case 5:
 					{
 						const auto form = std::get<RE::TESForm*>(a_value);
 						raw.push_back(form ? form->GetFormEditorID() : "");
 						break;
 					}
-				case 5:
+				case 6:
 					{
 						const auto list = std::get<std::vector<bool>>(a_value);
 						for (const auto item : list) {
@@ -136,7 +143,7 @@ namespace Adversity
 						}
 						break;
 					}
-				case 6:
+				case 7:
 					{
 						const auto list = std::get<std::vector<int>>(a_value);
 						for (const auto item : list) {
@@ -144,7 +151,7 @@ namespace Adversity
 						}
 						break;
 					}
-				case 7:
+				case 8:
 					{
 						const auto list = std::get<std::vector<float>>(a_value);
 						for (const auto item : list) {
@@ -152,7 +159,7 @@ namespace Adversity
 						}
 						break;
 					}
-				case 8:
+				case 9:
 					{
 						const auto list = std::get<std::vector<std::string>>(a_value);
 						for (const auto item : list) {
@@ -160,7 +167,7 @@ namespace Adversity
 						}
 						break;
 					}
-				case 9:
+				case 10:
 					{
 						const auto list = std::get<std::vector<RE::TESForm*>>(a_value);
 						for (const auto item : list) {
@@ -211,8 +218,8 @@ namespace Adversity
 
 		static std::pair<std::vector<std::string>, GenericData> ParseData(std::vector<std::string> a_raw)
 		{
-			GenericData values;
 			if (a_raw.size() > 1) {
+				GenericData values;
 				auto index = ConvertToGeneric(a_raw[0]).index();
 				bool valid = true;
 
@@ -233,18 +240,20 @@ namespace Adversity
 
 				switch (index) {
 				case 0:
-					values = CreateList<bool>(convertedValues);
 					break;
 				case 1:
-					values = CreateList<int>(convertedValues);
+					values = CreateList<bool>(convertedValues);
 					break;
 				case 2:
-					values = CreateList<float>(convertedValues);
+					values = CreateList<int>(convertedValues);
 					break;
 				case 3:
-					values = CreateList<std::string>(convertedValues);
+					values = CreateList<float>(convertedValues);
 					break;
 				case 4:
+					values = CreateList<std::string>(convertedValues);
+					break;
+				case 5:
 					values = CreateList<RE::TESForm*>(convertedValues);
 					break;
 				}
@@ -252,7 +261,7 @@ namespace Adversity
 				return std::make_pair(a_raw, values);
 			} else {
 				const auto value = ConvertToGeneric(a_raw[0]);
-				return std::make_pair(a_raw, values);
+				return std::make_pair(a_raw, value);
 			}
 		}
 
