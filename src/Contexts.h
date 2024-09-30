@@ -12,17 +12,15 @@ namespace Adversity
 		static void PersistAll();
 
 		template <typename T>
-		static T GetEventValue(const std::string& a_id, std::string a_key, T a_default)
+		static std::optional<T> GetEventValue(const std::string& a_id, const std::string& a_key)
 		{
 			if (const auto data = GetEventField(a_id, a_key)) {
 				if (std::holds_alternative<T>(*data)) {
-					return std::get<T>(*data);
-				} else {
-					return a_default;
+					return std::optional<T>{ std::get<T>(*data) };
 				}
 			}
 
-			return a_default;
+			return std::nullopt;
 		}
 		template <typename T>
 		static bool SetEventValue(std::string a_id, std::string a_key, T a_val)

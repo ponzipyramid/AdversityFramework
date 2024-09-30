@@ -121,11 +121,11 @@ namespace Adversity::Papyrus
 #define EVENTCONFIG(name, type)                                                                                                              \
 	inline type GetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_default)             \
 	{                                                                                                                                            \
-		return Contexts::GetEventValue<type>(a_id, a_key, a_default);                                                                     \
+		return Events::GetValue<type>(a_id, a_key, a_default);                                                                     \
 	}                                                                                                                                            \
 	inline bool SetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_val) \
 	{                                                                                                                                            \
-		return Contexts::SetEventValue<type>(a_id, a_key, a_val);                                                              \
+		return Events::SetValue<type>(a_id, a_key, a_val);                                                              \
 	} \
 
 #define ACTORCONFIG(name, type)                                                                                                 \
@@ -133,9 +133,9 @@ namespace Adversity::Papyrus
 	{ \
 		return Actors::GetValue<type>(a_context, a_actor, a_key, a_default); \
 	} \
-	inline bool SetActor##name(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, type a_val, bool a_persist) \
+	inline bool SetActor##name(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, type a_val) \
 	{ \
-		return Actors::SetValue<type>(a_context, a_actor, a_key, a_val, a_persist); \
+		return Actors::SetValue<type>(a_context, a_actor, a_key, a_val); \
 	} \
 
 #define CONFIGFUNCS(configType)\

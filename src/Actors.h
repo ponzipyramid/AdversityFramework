@@ -57,9 +57,9 @@ namespace Adversity
 			return a_default;
 		}
 		template <typename T>
-		static bool SetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_val, bool a_persist)
+		static bool SetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_val)
 		{
-			return SetData(a_context, a_actor, a_key, GenericData{ a_val }, a_persist);
+			return SetData(a_context, a_actor, a_key, GenericData{ a_val });
 		}
 
 		static inline void PersistAll()
@@ -103,17 +103,13 @@ namespace Adversity
 
 			return nullptr;
 		}
-		static inline bool SetData(std::string a_context, RE::Actor* a_actor, std::string a_key, GenericData a_data, bool a_persist)
+		static inline bool SetData(std::string a_context, RE::Actor* a_actor, std::string a_key, GenericData a_data)
 		{
 			if (const auto base = a_actor->GetActorBase()) {
 				const auto id = base->GetName();
 				_actors[a_context][id].SetValue(a_key, a_data);
 
 				_dirty[a_context] = true;
-
-				if (a_persist) {
-					Persist(a_context);
-				}
 
 				return true;
 			}
