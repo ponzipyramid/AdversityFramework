@@ -216,3 +216,23 @@ namespace Adversity
 		friend struct YAML::convert<Meta>;
 	};
 }
+
+namespace YAML
+{
+	using namespace Adversity;
+
+	template <>
+	struct convert<Meta>
+	{
+		static bool decode(const Node& node, Meta& rhs)
+		{
+			rhs.ReadData(node);
+			return true;
+		}
+
+		static Node encode(const Meta& rhs)
+		{
+			return rhs.WriteData();
+		}
+	};
+}

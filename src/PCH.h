@@ -118,8 +118,53 @@ namespace fs = std::filesystem;
 
 namespace Adversity::Papyrus
 {
+#define EVENTCONFIG(name, type)                                                                                                              \
+	inline type GetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_default)             \
+	{                                                                                                                                            \
+		return Contexts::GetEventValue<type>(a_id, a_key, a_default);                                                                     \
+	}                                                                                                                                            \
+	inline bool SetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_val) \
+	{                                                                                                                                            \
+		return Contexts::SetEventValue<type>(a_id, a_key, a_val);                                                              \
+	} \
+
+#define ACTORCONFIG(name, type)                                                                                                 \
+	inline type GetActor##name(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, type a_default) \
+	{ \
+		return Actors::GetValue<type>(a_context, a_actor, a_key, a_default); \
+	} \
+	inline bool SetActor##name(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, type a_val, bool a_persist) \
+	{ \
+		return Actors::SetValue<type>(a_context, a_actor, a_key, a_val, a_persist); \
+	} \
+
+#define CONFIGFUNCS(configType)\
+	configType(Bool, bool)\
+	configType(Int, int) \
+	configType(Float, float) \
+	configType(String, std::string) \
+	configType(Form, RE::TESForm*)\
+
+#define REGISTERACTOR(name) \
+						REGISTERFUNC(GetActor##name)                                 \
+							REGISTERFUNC(SetActor##name)
+
+#define REGISTEREVENT(name) \
+	REGISTERFUNC(GetActor##name)  \
+	REGISTERFUNC(SetActor##name)\
+
+
+#define REGISTERCONFIG(configType)\
+	configType(Bool)               \
+	configType(Int)           \
+	configType(Float)       \
+	configType(String)   \
+	configType(Form)\
+
+
 #define REGISTERFUNC(func) a_vm->RegisterFunction(#func##sv, "Adversity", func);
 #define REGISTERFUNCND(func) a_vm->RegisterFunction(#func##sv, "Adversity", func, true);
+
 
 	using VM = RE::BSScript::IVirtualMachine;
 	using StackID = RE::VMStackID;

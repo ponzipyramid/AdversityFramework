@@ -45,7 +45,7 @@ namespace Adversity
 		static T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
 		{
 			logger::info("looking for {} on {}", a_key, a_actor->GetActorBase()->GetName());
-			if (const auto data = Actors::GetData(a_context, a_actor, a_key)) {
+			if (const auto data = GetData(a_context, a_actor, a_key)) {
 				logger::info("found data {} on {}", a_key, a_actor->GetActorBase()->GetName());
 				if (std::holds_alternative<T>(*data)) {
 					return std::get<T>(*data);
@@ -57,10 +57,11 @@ namespace Adversity
 			return a_default;
 		}
 		template <typename T>
-		static void SetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_val, bool a_persist)
+		static bool SetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_val, bool a_persist)
 		{
-			Actors::SetData(a_context, a_actor, a_key, GenericData{ a_val }, a_persist);
+			return SetData(a_context, a_actor, a_key, GenericData{ a_val }, a_persist);
 		}
+
 		static inline void PersistAll()
 		{
 			for (const auto& [id, data] : _actors)
@@ -102,18 +103,22 @@ namespace Adversity
 
 			return nullptr;
 		}
-		static inline void SetData(std::string a_context, RE::Actor* a_actor, std::string a_key, GenericData a_data, bool a_persist)
+		static inline bool SetData(std::string a_context, RE::Actor* a_actor, std::string a_key, GenericData a_data, bool a_persist)
 		{
 			if (const auto base = a_actor->GetActorBase()) {
 				const auto id = base->GetName();
 				_actors[a_context][id].SetValue(a_key, a_data);
+
+				_dirty[a_context] = true;
+
+				if (a_persist) {
+					Persist(a_context);
+				}
+
+				return true;
 			}
 
-			_dirty[a_context] = true;
-
-			if (a_persist) {
-				Persist(a_context);
-			}
+			return false;
 		}
 
 		static inline std::unordered_map<std::string, std::unordered_map<std::string, Actor>> _actors;

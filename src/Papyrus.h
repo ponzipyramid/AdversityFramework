@@ -1,4 +1,5 @@
 #pragma once
+#include "Contexts.h"
 #include "Packs.h"
 #include "Util.h"
 #include "Willpower.h"
@@ -296,6 +297,9 @@ namespace Adversity::Papyrus
 		return false;
 	}
 
+	CONFIGFUNCS(EVENTCONFIG)
+
+
 	void SetLock(RE::StaticFunctionTag*, bool a_enable)
 	{
 		Util::GetFormById<RE::TESGlobal>(0x81B)->value = (float)a_enable;
@@ -400,18 +404,7 @@ namespace Adversity::Papyrus
 		return Actors::GetTraitIds(a_context, a_actor);
 	}
 
-	inline std::string GetActorString(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, std::string a_default)
-	{
-		return Actors::GetValue<std::string>(a_context, a_actor, a_key, a_default);
-	}
-	inline bool GetActorBool(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, bool a_default)
-	{
-		return Actors::GetValue<bool>(a_context, a_actor, a_key, a_default);
-	}
-	inline void SetActorBool(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::string a_key, bool a_val, bool a_persist)
-	{
-		Actors::SetValue<bool>(a_context, a_actor, a_key, a_val, a_persist);
-	}
+	CONFIGFUNCS(ACTORCONFIG)
 
 	inline bool RegisterFuncs(VM* a_vm)
 	{	
@@ -440,6 +433,7 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(FilterEventsByTags)
 		REGISTERFUNC(FilterEventsByValid)
 		REGISTERFUNC(WeighEventsByActor)
+		REGISTERCONFIG(REGISTEREVENT)
 
 		// willpower 
 		REGISTERFUNC(GetWillpower)
@@ -467,9 +461,7 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetTattooGroup)
 
 		// actors
-		REGISTERFUNC(GetActorString)
-		REGISTERFUNC(GetActorBool)
-		REGISTERFUNC(SetActorBool)
+		REGISTERCONFIG(REGISTERACTOR)
 
 		return true;
 	}
