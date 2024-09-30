@@ -2,6 +2,7 @@
 
 #include "Trait.h"
 #include "Util.h"
+#include "Serialization.h"
 
 namespace Adversity
 {
@@ -20,7 +21,36 @@ namespace Adversity
 	class Meta
 	{
 	public:
-		void ReadData(const YAML::Node& a_node)
+		Meta() = default;
+		Meta(SKSE::SerializationInterface* a_intfc)
+		{
+			auto i = Serialization::Read<std::size_t>(a_intfc);
+			_data.reserve(i);
+			for (; i > 0; i--) {
+				const auto key = Serialization::Read<std::string>(a_intfc);				
+				auto j = Serialization::Read<std::size_t>(a_intfc);
+				std::vector<std::string> raw;
+				raw.reserve(j);
+				for (; j > 0; j--) {
+					raw.push_back(Serialization::Read<std::string>(a_intfc));
+				}
+				_data[key] = ParseData(raw);
+			}
+		}
+
+		inline void Serialize(SKSE::SerializationInterface* a_intfc) const
+		{
+			Serialization::Write(a_intfc, _data.size());
+			for (const auto& [key, value] : _data) {
+				Serialization::Write(a_intfc, key);
+				Serialization::Write(a_intfc, value.first.size());
+				for (const auto& raw : value.first) {
+					Serialization::Write(a_intfc, raw);
+				}
+			}
+		}
+
+		inline void Read(const YAML::Node& a_node)
 		{
 			for (YAML::const_iterator it = a_node.begin(); it != a_node.end(); ++it) {
 				const auto key = Util::Lower(it->first.as<std::string>());
@@ -28,55 +58,22 @@ namespace Adversity
 				if (it->second.IsSequence()) {
 					const auto rawValues = it->second.as<std::vector<std::string>>(std::vector<std::string>{});
 
-					GenericData values;
-					if (!rawValues.empty()) {
-						auto index = ConvertToGeneric(rawValues[0]).index();
-						bool valid = true;
-
-						std::vector<GenericData> convertedValues;
-						convertedValues.reserve(rawValues.size());
-
-						for (const auto& val : rawValues) {
-							const auto converted = ConvertToGeneric(val);
-							if (index != converted.index()) {
-								valid = false;
-							}
-							convertedValues.push_back(converted);
-						}
-
-						if (!valid) {
-							index = 3;
-						}
-
-						switch (index) {
-						case 0:
-							values = CreateList<bool>(convertedValues);
-							break;
-						case 1:
-							values = CreateList<int>(convertedValues);
-							break;
-						case 2:
-							values = CreateList<float>(convertedValues);
-							break;
-						case 3:
-							values = CreateList<std::string>(convertedValues);
-							break;
-						case 4:
-							values = CreateList<RE::TESForm*>(convertedValues);
-							break;
-						}
-					}
-
-					_data[key] = std::make_pair(rawValues, values);
+					
 				} else if (it->second.IsScalar()) {
 					const auto rawValue = it->second.as<std::string>("");
 					const auto value = ConvertToGeneric(rawValue);
 					_data[key] = std::make_pair(std::vector<std::string>{ rawValue }, value);
 				}
+
+				_data[key] = ParseData(
+					it->second.IsSequence() ? 
+					it->second.as<std::vector<std::string>>(std::vector<std::string>{}) : 
+					std::vector<std::string>{ it->second.as<std::string>("") }
+				);
 			}
 		}
 
-		YAML::Node WriteData() const
+		inline YAML::Node Write() const
 		{
 			YAML::Node node;
 
@@ -182,7 +179,7 @@ namespace Adversity
 			}
 		}
 	private:
-		GenericData ConvertToGeneric(const std::string& a_str)
+		static GenericData ConvertToGeneric(const std::string& a_str)
 		{
 			GenericData value = a_str;
 
@@ -202,7 +199,7 @@ namespace Adversity
 		}
 
 		template <typename T>
-		std::vector<T> CreateList(std::vector<GenericData>& a_values)
+		static std::vector<T> CreateList(std::vector<GenericData>& a_values)
 		{
 			std::vector<T> converted;
 			converted.reserve(a_values.size());
@@ -210,6 +207,53 @@ namespace Adversity
 				converted.push_back(std::get<T>(val));
 			}
 			return converted;
+		}
+
+		static std::pair<std::vector<std::string>, GenericData> ParseData(std::vector<std::string> a_raw)
+		{
+			GenericData values;
+			if (a_raw.size() > 1) {
+				auto index = ConvertToGeneric(a_raw[0]).index();
+				bool valid = true;
+
+				std::vector<GenericData> convertedValues;
+				convertedValues.reserve(a_raw.size());
+
+				for (const auto& val : a_raw) {
+					const auto converted = ConvertToGeneric(val);
+					if (index != converted.index()) {
+						valid = false;
+					}
+					convertedValues.push_back(converted);
+				}
+
+				if (!valid) {
+					index = 3;
+				}
+
+				switch (index) {
+				case 0:
+					values = CreateList<bool>(convertedValues);
+					break;
+				case 1:
+					values = CreateList<int>(convertedValues);
+					break;
+				case 2:
+					values = CreateList<float>(convertedValues);
+					break;
+				case 3:
+					values = CreateList<std::string>(convertedValues);
+					break;
+				case 4:
+					values = CreateList<RE::TESForm*>(convertedValues);
+					break;
+				}
+
+				return std::make_pair(a_raw, values);
+			} else {
+				const auto value = ConvertToGeneric(a_raw[0]);
+				return std::make_pair(a_raw, values);
+			}
 		}
 
 		std::unordered_map<std::string, std::pair<std::vector<std::string>, GenericData>> _data;
@@ -226,13 +270,13 @@ namespace YAML
 	{
 		static bool decode(const Node& node, Meta& rhs)
 		{
-			rhs.ReadData(node);
+			rhs.Read(node);
 			return true;
 		}
 
 		static Node encode(const Meta& rhs)
 		{
-			return rhs.WriteData();
+			return rhs.Write();
 		}
 	};
 }

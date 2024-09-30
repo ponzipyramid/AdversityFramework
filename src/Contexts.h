@@ -10,7 +10,9 @@ namespace Adversity
 		static void Init();
 		static void Persist(const std::string& a_id);
 		static void PersistAll();
-
+		static void Save(SKSE::SerializationInterface* a_intfc);
+		static void Load(SKSE::SerializationInterface* a_intfc);
+		static void Revert();
 
 		template <typename T>
 		static std::optional<T> GetEventValue(const std::string& a_id, const std::string& a_key, bool a_persist)

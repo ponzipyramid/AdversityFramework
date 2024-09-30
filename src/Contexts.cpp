@@ -2,6 +2,7 @@
 #include "Packs.h"
 #include "Devices.h"
 #include "Actors.h"
+#include "Serialization.h"
 
 using namespace Adversity;
 
@@ -101,4 +102,26 @@ void Contexts::PersistAll()
 			Persist(id);
 		}
 	}
+}
+
+void Contexts::Save(SKSE::SerializationInterface* a_intfc)
+{
+	Serialization::Write(a_intfc, _runtime.size());
+	for (const auto& [_, context] : _runtime) {
+		context.Serialize(a_intfc);
+	}
+}
+
+void Contexts::Load(SKSE::SerializationInterface* a_intfc)
+{
+	auto i = Serialization::Read<std::size_t>(a_intfc);
+	for (; i > 0; i--) {
+		Context context{ a_intfc };
+		_runtime[context.GetId()] = context;
+	}
+}
+
+void Contexts::Revert()
+{
+	_runtime.clear();
 }

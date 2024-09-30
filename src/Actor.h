@@ -36,7 +36,7 @@ namespace YAML
 				rhs._traits.push_back(Util::Lower(trait));
 			}
 
-			rhs.ReadData(node["data"]);
+			rhs.Read(node["data"]);
 
 			return true;
 		}
@@ -47,7 +47,7 @@ namespace YAML
 
 			node["id"] = rhs._base->GetFormEditorID();
 			node["traits"] = rhs._traits;
-			node["data"] = rhs.WriteData();
+			node["data"] = rhs.Write();
 
 			return node;
 		}

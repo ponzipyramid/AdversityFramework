@@ -44,6 +44,8 @@ void InitializeSerialization()
 	const auto serialization = SKSE::GetSerializationInterface();
 	serialization->SetUniqueID(Saves::RecordName);
 	serialization->SetSaveCallback(Saves::Save);
+	serialization->SetLoadCallback(Saves::Load);
+	serialization->SetRevertCallback(Saves::Revert);
 }
 
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Load(const SKSE::LoadInterface* a_skse)
