@@ -118,6 +118,18 @@ namespace fs = std::filesystem;
 
 namespace Adversity::Papyrus
 {
+
+#define CONTEXTCONFIG(name, type)                                                                                           \
+	inline type GetContext##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_default, bool a_persist) \
+	{                                                                                                                       \
+		return Contexts::GetValue<type>(a_id, a_key, a_default, a_persist);                                                 \
+	}                                                                                                                       \
+	inline bool SetContext##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_val, bool a_persist)     \
+	{                                                                                                                       \
+		return Contexts::SetValue<type>(a_id, a_key, a_val, a_persist);                                                     \
+	} \
+
+
 #define EVENTCONFIG(name, type)                                                                                                              \
 	inline type GetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_default, bool a_persist)             \
 	{                                                                                                                               \
@@ -145,13 +157,19 @@ namespace Adversity::Papyrus
 	configType(String, std::string) \
 	configType(Form, RE::TESForm*)\
 
+#define REGISTERCONTEXT(name)      \
+	REGISTERFUNC(GetContext##name) \
+	REGISTERFUNC(SetContext##name)\
+
+#define REGISTEREVENT(name)      \
+		REGISTERFUNC(GetEvent##name) \
+			REGISTERFUNC(SetEvent##name)\
+
+
 #define REGISTERACTOR(name) \
 						REGISTERFUNC(GetActor##name)                                 \
 							REGISTERFUNC(SetActor##name)
 
-#define REGISTEREVENT(name) \
-	REGISTERFUNC(GetEvent##name)  \
-	REGISTERFUNC(SetEvent##name)\
 
 
 #define REGISTERCONFIG(configType)\

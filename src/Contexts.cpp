@@ -51,6 +51,17 @@ void Contexts::Init()
 	}
 }
 
+Meta* Contexts::GetData(const std::string& a_id, bool a_persist)
+{
+	const auto key = Util::Lower(a_id);
+	auto& data = a_persist ? _persistent : _runtime;
+	if (data.count(key)) {
+		return data[key].GetConfig();
+	}
+
+	return nullptr;
+}
+
 Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist)
 {
 	const auto id = Util::Lower(a_id);

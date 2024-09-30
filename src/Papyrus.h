@@ -50,6 +50,8 @@ namespace Adversity::Papyrus
 		return std::vector<std::string>{ tags.begin(), tags.end() };
 	}
 
+	CONFIGFUNCS(CONTEXTCONFIG)
+
 	std::string GetPackName(RE::StaticFunctionTag*, std::string a_pack) {
 		if (const auto pack = Packs::GetById(a_pack)) {
 			return pack->GetName();
@@ -289,6 +291,10 @@ namespace Adversity::Papyrus
 				return false;
 			}
 
+			if (!Events::GetValue(ev->GetId(), "enabled", true, true)) {
+				return false;
+			}
+
 			ev->SetStatus(status);
 			return true;
 		} else {
@@ -375,6 +381,26 @@ namespace Adversity::Papyrus
 
 		return Events::GetIds(filtered);
 	}
+
+	std::vector<std::string> FilterEventsByCooldown(RE::StaticFunctionTag*, std::vector<std::string> a_events)
+	{
+		const auto events{ Events::GetByIds(a_events) };
+		const auto filtered{
+			Events::Filter(events, [](Event* a_rule) {
+				if (const auto cooldown = Events::GetValue(a_rule->GetId(), "cooldown", 0, true)) {
+					const auto lastStopped = Events::GetValue(a_rule->GetId(), "last-stopped", -100, false);
+					if (Util::GetGameTime() - lastStopped < cooldown) {
+						return false;
+					}
+				}
+
+				return true;
+			})
+		};
+
+		return Events::GetIds(filtered);
+	}
+
 	inline std::vector<int> WeighEventsByActor(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::vector<std::string> a_events, int a_weight, bool a_considerDislikes, bool a_stack)
 	{
 		const auto traits = Actors::GetTraits(a_context, a_actor);
@@ -412,7 +438,8 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetContextEvents)
 		REGISTERFUNC(GetContextTags)
 		REGISTERFUNC(GetPacks)
-		
+		REGISTERCONFIG(REGISTERCONTEXT)
+
 		// packs
 		REGISTERFUNC(GetPackQuest)
 		REGISTERFUNC(GetPackEvents)
@@ -432,6 +459,7 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(FilterEventsBySeverity)
 		REGISTERFUNC(FilterEventsByTags)
 		REGISTERFUNC(FilterEventsByValid)
+		REGISTERFUNC(FilterEventsByCooldown)
 		REGISTERFUNC(WeighEventsByActor)
 		REGISTERCONFIG(REGISTEREVENT)
 

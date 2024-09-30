@@ -20,6 +20,7 @@ namespace Adversity
 				const auto id = Serialization::Read<std::string>(a_intfc);
 				_events[id] = Meta{ a_intfc };
 			}
+			_config = Meta{ a_intfc };
 		}
 
 		inline std::string GetId() { return _id; }
@@ -28,6 +29,8 @@ namespace Adversity
 		{
 			_id = a_id;
 		}
+
+		inline Meta* GetConfig() { return &_config; }
 
 		inline Meta* GetEventData(const std::string& a_pack, const std::string& a_name)
 		{
@@ -43,12 +46,14 @@ namespace Adversity
 				Serialization::Write(a_intfc, id);
 				data.Serialize(a_intfc);
 			}
+			_config.Serialize(a_intfc);
 		}
 
 	private:
 		std::string _id;
 
 		Metadata _events;
+		Meta _config;
 
 		friend struct YAML::convert<Context>;
 	};
@@ -64,6 +69,8 @@ namespace YAML
 		static bool decode(const Node& node, Context& rhs)
 		{
 			rhs._events = node["events"].as<Metadata>(Metadata{});
+			rhs._config = node["config"].as<Meta>(Meta{});
+
 			return true;
 		}
 
@@ -72,6 +79,7 @@ namespace YAML
 			Node node;
 
 			node["events"] = rhs._events;
+			node["config"] = rhs._config;
 		
 			return node;
 		}

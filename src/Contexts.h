@@ -15,6 +15,30 @@ namespace Adversity
 		static void Revert();
 
 		template <typename T>
+		static T GetValue(const std::string& a_id, const std::string& a_key, T a_default, bool a_persist)
+		{
+			if (const auto data = GetData(a_id, a_persist)) {
+				if (const auto field = data->GetValue(a_key)) {
+					if (std::holds_alternative<T>(*field)) {
+						return std::get<T>(*field);
+					}
+				}
+			}
+
+			return a_default;
+		}
+		template <typename T>
+		static bool SetValue(std::string a_id, std::string a_key, T a_val, bool a_persist)
+		{
+			if (const auto data = GetData(a_id, a_persist)) {
+				data->SetValue(a_key, GenericData{ a_val });
+				return true;
+			}
+
+			return false;
+		}
+
+		template <typename T>
 		static std::optional<T> GetEventValue(const std::string& a_id, const std::string& a_key, bool a_persist)
 		{
 			if (const auto field = GetEventField(a_id, a_key, a_persist)) {				
@@ -42,6 +66,8 @@ namespace Adversity
 			return false;
 		}
 	private:
+		static Meta* GetData(const std::string& a_id, bool a_persist);
+		
 		static Meta* GetEventData(const std::string& a_id, bool a_persist);
 		static GenericData* GetEventField(const std::string& a_id, const std::string& a_key, bool a_persist);
 
