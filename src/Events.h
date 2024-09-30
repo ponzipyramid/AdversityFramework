@@ -18,20 +18,20 @@ namespace Adversity
 		static std::vector<Event*> Filter(std::vector<Event*> a_events, std::function<bool(Event* a_Event)> a_check);
 
 		template <typename T>
-		static T GetValue(const std::string& a_id, const std::string& a_key, T a_default)
+		static T GetValue(const std::string& a_id, const std::string& a_key, T a_default, bool a_persist)
 		{
-			if (const auto data = Contexts::GetEventValue<T>(a_id, a_key)) {
+			if (const auto data = Contexts::GetEventValue<T>(a_id, a_key, a_persist)) {
 				return data.value();
 			}
 
-			// TODO: add default metadata to events
+			// TODO: add default persistent metadata to events
 
 			return a_default;
 		}
 		template <typename T>
-		static bool SetValue(std::string a_id, std::string a_key, T a_val)
+		static bool SetValue(std::string a_id, std::string a_key, T a_val, bool a_persist)
 		{
-			return Contexts::SetEventValue<T>(a_id, a_key, a_val);
+			return Contexts::SetEventValue<T>(a_id, a_key, a_val, a_persist);
 		}
 
 	private:

@@ -31,7 +31,7 @@ void Contexts::Init()
 				logger::info("loading user data for {}", id);
 				auto context = YAML::Load(userData).as<Context>();
 				context.Init(id);
-				_contexts[id] = context;
+				_persistent[id] = context;
 				_dirty[id] = false;
 				_locks[id];
 			}
@@ -50,20 +50,26 @@ void Contexts::Init()
 	}
 }
 
-
-Meta* Contexts::GetEventData(const std::string& a_id)
+Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist)
 {
-	if (_contexts.count(a_id)) {
-		auto& context = _contexts[a_id];
-		return context.GetEventData(a_id);
+	const auto splits = Util::Split(a_id, "/");
+
+	if (splits.size() != 3)
+		return nullptr;
+
+	auto& data = a_persist ? _persistent : _runtime;
+
+	if (data.count(splits[1])) {
+		auto& context = data[a_id];
+		return context.GetEventData(splits[1], splits[2]);
 	}
 
 	return nullptr;
 }
 
-GenericData* Contexts::GetEventField(const std::string& a_id, const std::string& a_key)
+GenericData* Contexts::GetEventField(const std::string& a_id, const std::string& a_key, bool a_persist)
 {
-	if (const auto& data = GetEventData(a_id)) {
+	if (const auto& data = GetEventData(a_id, a_persist)) {
 		return data->GetValue(a_key);
 	}
 
@@ -71,13 +77,13 @@ GenericData* Contexts::GetEventField(const std::string& a_id, const std::string&
 }
 void Contexts::Persist(const std::string& a_id)
 {
-	if (!_contexts.count(a_id)) {
+	if (!_persistent.count(a_id)) {
 		return;
 	}
 
 	std::unique_lock lock{ _locks[a_id] };
 
-	auto context = _contexts[a_id];
+	auto context = _persistent[a_id];
 
 	YAML::Node node{ context };
 	const std::string file{ std::format("Data/SKSE/AdversityFramework/UserData/{}.yaml", a_id) };
@@ -90,7 +96,7 @@ void Contexts::Persist(const std::string& a_id)
 
 void Contexts::PersistAll()
 {
-	for (const auto& [id, context] : _contexts) {
+	for (const auto& [id, context] : _persistent) {
 		if (_dirty[id]) {
 			Persist(id);
 		}

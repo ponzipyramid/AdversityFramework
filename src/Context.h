@@ -17,14 +17,9 @@ namespace Adversity
 			_id = a_id;
 		}
 
-		inline Meta* GetEventData(const std::string& a_id)
+		inline Meta* GetEventData(const std::string& a_pack, const std::string& a_name)
 		{
-			const auto& splits = Util::Split(a_id, "/");
-
-			if (splits.size() != 3)
-				return nullptr;
-
-			const auto id{ splits[1] + "/" + splits[2] };
+			const auto id{ a_pack + "/" + a_name };
 			return _events.count(id) ? &_events[id] : nullptr;
 		}
 	private:

@@ -119,13 +119,13 @@ namespace fs = std::filesystem;
 namespace Adversity::Papyrus
 {
 #define EVENTCONFIG(name, type)                                                                                                              \
-	inline type GetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_default)             \
+	inline type GetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_default, bool a_persist)             \
 	{                                                                                                                                            \
-		return Events::GetValue<type>(a_id, a_key, a_default);                                                                     \
+		return Events::GetValue<type>(a_id, a_key, a_default, a_persist);                                                                     \
 	}                                                                                                                                            \
-	inline bool SetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_val) \
+	inline bool SetEvent##name(RE::StaticFunctionTag*, std::string a_id, std::string a_key, type a_val, bool a_persist) \
 	{                                                                                                                                            \
-		return Events::SetValue<type>(a_id, a_key, a_val);                                                              \
+		return Events::SetValue<type>(a_id, a_key, a_val, a_persist);                                                              \
 	} \
 
 #define ACTORCONFIG(name, type)                                                                                                 \
