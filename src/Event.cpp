@@ -54,8 +54,29 @@ bool Event::Conflicts(Event* a_other)
 	return false;
 }
 
-bool Conflict::With(Conflict a_other)
+bool Conflict::With(const Conflict& a_other)
 {
+	if (!locations.empty() && !a_other.locations.empty()) {
+		bool overlap = false;
+		for (const auto& loc : locations) {
+			if (a_other.locations.contains(loc)) {
+				overlap = true;
+				break;
+			}
+		}
+
+		for (const auto& loc : a_other.locations) {
+			if (locations.contains(loc)) {
+				overlap = true;
+				break;
+			}
+		}
+
+		if (!overlap) {
+			return false;
+		}
+	}
+
 	if (type == Type::Filth && a_other.type == Type::Clean) {
 		return true;
 	}

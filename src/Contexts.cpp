@@ -62,7 +62,7 @@ Meta* Contexts::GetData(const std::string& a_id, bool a_persist)
 	return nullptr;
 }
 
-Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist)
+Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist, bool a_create)
 {
 	const auto id = Util::Lower(a_id);
 	const auto splits = Util::Split(id, "/");
@@ -74,7 +74,9 @@ Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist)
 
 	if (data.count(splits[0])) {
 		auto& context = data[splits[0]];
-		return context.GetEventData(splits[1], splits[2]);
+		return context.GetEventData(splits[1], splits[2], a_create);
+	} else {
+		logger::info("did not find context");
 	}
 
 	return nullptr;

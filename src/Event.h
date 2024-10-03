@@ -20,10 +20,18 @@ namespace Adversity
 			Clean
 		};
 
+		enum Location
+		{
+			None,
+			Outside,
+			Town
+		};
+
 		Type type;
 		std::unordered_set<int> slots;
+		std::unordered_set<Location> locations;
 		bool exclusive;
-		bool With(Conflict a_other);
+		bool With(const Conflict& a_other);
 	};
 
 	class Event : public Conditional
@@ -58,7 +66,12 @@ namespace Adversity
 		inline std::string GetId() const { return _id; }
 		inline std::string GetContext() { return _context; }
 		inline int GetSeverity() { return _severity; }
-		inline Status GetStatus() { return static_cast<Status>(_global->value); }
+		inline Status GetStatus() { 
+			if (!ReqsMet())
+				SetStatus(Event::Status::Disabled);
+
+			return static_cast<Status>(_global->value); 
+		}
 		inline void SetStatus(Status a_status)
 		{
 			_global->value = (float)a_status;
@@ -111,6 +124,12 @@ namespace YAML
 			const auto slots = node["slots"].as<std::vector<int>>(std::vector<int>{});
 			rhs.slots = std::unordered_set<int>{ slots.begin(), slots.end() };
 			rhs.exclusive = node["exclusive"].as<std::string>("") == "true";
+
+			const auto locs = node["loc"].as<std::vector<std::string>>(std::vector<std::string>{});
+			for (const auto& loc : locs) {
+				rhs.locations.insert(magic_enum::enum_cast<Conflict::Location>(loc, magic_enum::case_insensitive).value_or(Conflict::Location::None));
+			}
+
 			return rhs.type != Conflict::Type::Unknown;
 		}
 	};

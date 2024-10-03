@@ -32,9 +32,15 @@ namespace Adversity
 
 		inline Meta* GetConfig() { return &_config; }
 
-		inline Meta* GetEventData(const std::string& a_pack, const std::string& a_name)
+		inline Meta* GetEventData(const std::string& a_pack, const std::string& a_name, bool a_create = false)
 		{
 			const auto id{ a_pack + "/" + a_name };
+
+			if (a_create) {
+				logger::info("creating");
+				_events[id];
+			}
+
 			return _events.count(id) ? &_events[id] : nullptr;
 		}
 

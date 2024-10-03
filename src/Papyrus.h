@@ -280,9 +280,10 @@ namespace Adversity::Papyrus
 
 	bool SetEventStatus(RE::StaticFunctionTag*, std::string a_event, int a_status)
 	{
+		if (a_status > (int)Event::Status::Active)
+			return false;
+
 		if (auto ev = Events::GetById(a_event)) {
-			if (a_status > (int)Event::Status::Active)
-				return false;
 
 			const auto status = (Event::Status)a_status;
 
@@ -291,7 +292,7 @@ namespace Adversity::Papyrus
 				return false;
 			}
 
-			if (!Events::GetValue(ev->GetId(), "enabled", true, true)) {
+			if (!Events::GetValue(ev->GetId(), "enabled", true, true) && a_status != Event::Status::Disabled) {
 				return false;
 			}
 
@@ -314,16 +315,16 @@ namespace Adversity::Papyrus
 	std::vector<std::string> FilterEventsByStatus(RE::StaticFunctionTag*, std::vector<std::string> a_events, int a_status)
 	{
 		const auto events { Events::GetByIds(a_events) };
-		return Filter(events, [a_status](Event* a_rule) {
-			return a_rule->GetStatus() == a_status;
+		return Filter(events, [a_status](Event* a_event) {
+			return a_event->GetStatus() == a_status;
 		});
 	}
 
 	std::vector<std::string> FilterEventsBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_events, int a_severity, bool a_greater, bool a_equal)
 	{
 		const auto events{ Events::GetByIds(a_events) };
-		return Filter(events, [a_severity, a_greater, a_equal](Event* a_rule) {
-			const auto severity = a_rule->GetSeverity();
+		return Filter(events, [a_severity, a_greater, a_equal](Event* a_event) {
+			const auto severity = a_event->GetSeverity();
 
 			if (a_equal && severity == a_severity)
 				return true;
@@ -339,15 +340,15 @@ namespace Adversity::Papyrus
 	std::vector<std::string> FilterEventsByTags(RE::StaticFunctionTag*, std::vector<std::string> a_events, std::vector<std::string> a_tags, bool a_all, bool a_invert)
 	{
 		const auto events{ Events::GetByIds(a_events) };
-		return Filter(events, [&a_tags, a_all, a_invert](Event* a_rule) {
-			return a_rule->HasTags(a_tags, a_all) != a_invert;
+		return Filter(events, [&a_tags, a_all, a_invert](Event* a_event) {
+			return a_event->HasTags(a_tags, a_all) != a_invert;
 		});
 	}
 
 	std::vector<std::string> FilterEventsByValid(RE::StaticFunctionTag*, std::vector<std::string> a_events, RE::Actor* a_target)
 	{
-		const auto& active = Events::Filter([](Event* a_rule) {
-			const auto status{ a_rule->GetStatus() };
+		const auto& active = Events::Filter([](Event* a_event) {
+			const auto status{ a_event->GetStatus() };
 			return status == Event::Status::Active || status == Event::Status::Reserved;
 		});
 
@@ -355,21 +356,25 @@ namespace Adversity::Papyrus
 
 		const auto events{ Events::GetByIds(a_events) };
 		const auto filtered{
-			Events::Filter(events, [&active, &player, &a_target](Event* a_rule) {
-				if (a_rule->GetStatus() == Event::Status::Disabled)
+			Events::Filter(events, [&active, &player, &a_target](Event* a_event) {
+				if (a_event->GetStatus() == Event::Status::Disabled)
 					return false;
 
-				if (!a_rule->ReqsMet())
+				if (!a_event->ReqsMet())
 					return false;
 
-				if (!a_rule->ConditionsMet(player, a_target)) {
+				if (!a_event->ConditionsMet(player, a_target)) {
+					return false;
+				}
+
+				if (!Events::GetValue(a_event->GetId(), "enabled", true, true)) {
 					return false;
 				}
 
 				bool compatible = true;
 
 				for (auto rule : active) {
-					if (rule->Conflicts(a_rule) || rule->GetId() == a_rule->GetId()) {
+					if (rule->Conflicts(a_event) || rule->GetId() == a_event->GetId()) {
 						compatible = false;
 						break;
 					}
@@ -386,9 +391,9 @@ namespace Adversity::Papyrus
 	{
 		const auto events{ Events::GetByIds(a_events) };
 		const auto filtered{
-			Events::Filter(events, [](Event* a_rule) {
-				if (const auto cooldown = Events::GetValue(a_rule->GetId(), "cooldown", 0, true)) {
-					const auto lastStopped = Events::GetValue(a_rule->GetId(), "last-stopped", -100, false);
+			Events::Filter(events, [](Event* a_event) {
+				if (const auto cooldown = Events::GetValue(a_event->GetId(), "cooldown", 0, true)) {
+					const auto lastStopped = Events::GetValue(a_event->GetId(), "last-stopped", -100, false);
 					if (Util::GetGameTime() - lastStopped < cooldown) {
 						return false;
 					}

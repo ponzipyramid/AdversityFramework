@@ -98,92 +98,87 @@ namespace Adversity
 
 			return nullptr;
 		}
-		inline bool SetValue(std::string a_key, GenericData a_value)
+		inline void SetValue(std::string a_key, GenericData a_value)
 		{
 			a_key = Util::Lower(a_key);
-			if (_data.count(a_key)) {
-				std::vector<std::string> raw;
-				switch (a_value.index()) {
-				case 0: 
-					{
-						raw.push_back("");
-						break;
-					}	
-				case 1:
-					{
-						raw.push_back(std::to_string(std::get<bool>(a_value)));
-						break;
-					}
-				case 2:
-					{
-						raw.push_back(std::to_string(std::get<int>(a_value)));
-						break;
-					}
-				case 3:
-					{
-						raw.push_back(std::to_string(std::get<float>(a_value)));
-						break;
-					}
-				case 4:
-					{
-						raw.push_back(std::get<std::string>(a_value));
-						break;
-					}
-				case 5:
-					{
-						const auto form = std::get<RE::TESForm*>(a_value);
-						raw.push_back(form ? form->GetFormEditorID() : "");
-						break;
-					}
-				case 6:
-					{
-						const auto list = std::get<std::vector<bool>>(a_value);
-						for (const auto item : list) {
-							raw.push_back(std::to_string(item));
-						}
-						break;
-					}
-				case 7:
-					{
-						const auto list = std::get<std::vector<int>>(a_value);
-						for (const auto item : list) {
-							raw.push_back(std::to_string(item));
-						}
-						break;
-					}
-				case 8:
-					{
-						const auto list = std::get<std::vector<float>>(a_value);
-						for (const auto item : list) {
-							raw.push_back(std::to_string(item));
-						}
-						break;
-					}
-				case 9:
-					{
-						const auto list = std::get<std::vector<std::string>>(a_value);
-						for (const auto item : list) {
-							raw.push_back(item);
-						}
-						break;
-					}
-				case 10:
-					{
-						const auto list = std::get<std::vector<RE::TESForm*>>(a_value);
-						for (const auto item : list) {
-							raw.push_back(item ? item->GetFormEditorID() : "");
-						}
-						break;
-					}
-				default:
+			std::vector<std::string> raw;
+			switch (a_value.index()) {
+			case 0:
+				{
+					raw.push_back("");
 					break;
 				}
-
-				_data[a_key] = std::make_pair(raw, a_value);
-				return true;
-			} else {
-				return false;
+			case 1:
+				{
+					raw.push_back(std::to_string(std::get<bool>(a_value)));
+					break;
+				}
+			case 2:
+				{
+					raw.push_back(std::to_string(std::get<int>(a_value)));
+					break;
+				}
+			case 3:
+				{
+					raw.push_back(std::to_string(std::get<float>(a_value)));
+					break;
+				}
+			case 4:
+				{
+					raw.push_back(std::get<std::string>(a_value));
+					break;
+				}
+			case 5:
+				{
+					const auto form = std::get<RE::TESForm*>(a_value);
+					raw.push_back(form ? form->GetFormEditorID() : "");
+					break;
+				}
+			case 6:
+				{
+					const auto list = std::get<std::vector<bool>>(a_value);
+					for (const auto item : list) {
+						raw.push_back(std::to_string(item));
+					}
+					break;
+				}
+			case 7:
+				{
+					const auto list = std::get<std::vector<int>>(a_value);
+					for (const auto item : list) {
+						raw.push_back(std::to_string(item));
+					}
+					break;
+				}
+			case 8:
+				{
+					const auto list = std::get<std::vector<float>>(a_value);
+					for (const auto item : list) {
+						raw.push_back(std::to_string(item));
+					}
+					break;
+				}
+			case 9:
+				{
+					const auto list = std::get<std::vector<std::string>>(a_value);
+					for (const auto item : list) {
+						raw.push_back(item);
+					}
+					break;
+				}
+			case 10:
+				{
+					const auto list = std::get<std::vector<RE::TESForm*>>(a_value);
+					for (const auto item : list) {
+						raw.push_back(item ? item->GetFormEditorID() : "");
+					}
+					break;
+				}
+			default:
+				break;
 			}
+
+			_data[a_key] = std::make_pair(raw, a_value);
 		}
 	private:
 		static GenericData ConvertToGeneric(const std::string& a_str)
