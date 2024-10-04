@@ -167,6 +167,10 @@ namespace Adversity::Papyrus
 		return variants;		
 	}
 
+	bool AddVariant(RE::StaticFunctionTag*, std::string a_context, std::string a_pack, std::string a_name) {
+		return Outfits::AddVariant(a_context, a_pack, a_name);
+	}
+
 	std::vector<std::string> FilterOutfitsBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_variants, int a_severity, bool a_greater, bool a_equal)
 	{
 		std::vector<std::string> filtered;
@@ -519,6 +523,7 @@ namespace Adversity::Papyrus
 
 		// outfits
 		REGISTERFUNC(GetOutfits)
+		REGISTERFUNC(AddVariant)
 		REGISTERFUNC(GetOutfitPieces)
 		REGISTERFUNC(GetOutfitSeverity)
 		REGISTERFUNC(ValidateOutfits)

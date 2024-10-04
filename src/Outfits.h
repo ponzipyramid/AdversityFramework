@@ -55,10 +55,13 @@ namespace Adversity
 	{
 	public:
 		static void Load(std::string a_context, std::string a_pack);
+		static void Load(std::string a_id, Outfit a_outfit);
+		static void Reload(std::string a_context, std::string a_pack, std::string a_name);
 		static Outfit* GetOutfit(std::string a_context, std::string a_name);
 		static Outfit* GetOutfit(std::string a_id);
 		static Variant* GetVariant(std::string a_id);
 		static bool Validate(std::vector<std::string> a_ids);
+		static bool AddVariant(std::string a_context, std::string a_pack, std::string a_name);
 	private:
 		static inline std::unordered_map<std::string, Outfit> _outfits;
 		static inline std::unordered_map<std::string, Variant> _variants;
@@ -75,19 +78,7 @@ namespace YAML
 		static bool decode(const Node& node, Piece& rhs)
 		{
 			const auto id = node["id"].as<std::string>();
-
-			if (id.starts_with("0x")) {
-				const auto splits{ Util::Split(id, "|") };
-
-				if (splits.size() == 2) {
-					const auto formId{ std::stol(splits[0], NULL, 0) };
-					const auto modName{ splits[1] };
-
-					rhs.armo = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(formId, modName);
-				}
-			} else {
-				rhs.armo = RE::TESForm::LookupByEditorID<RE::TESObjectARMO>(id);	
-			}
+			rhs.armo = Util::GetFormFromString<RE::TESObjectARMO>(id);
 
 			if (rhs.armo) {
 				const auto kwds = node["addKeywords"].as<std::vector<std::string>>(std::vector<std::string>{});

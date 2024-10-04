@@ -7,23 +7,36 @@ using namespace Adversity;
 
 void Outfits::Load(std::string a_context, std::string a_pack)
 {
-	Util::ProcessEntities<Outfit>(a_context, a_pack, "outfits", [&a_context](std::string a_id, Outfit a_outfit) {
-		a_outfit.id = a_id;
-
-		if (a_outfit.Validate()) {
-			_outfits.insert({ a_id, a_outfit });
-
-			auto& outfit{ _outfits[a_id] };
-
-			for (auto i = 0; i < outfit.variants.size(); i++) {
-				const std::string variantId{ std::format("{}/{}", a_outfit.id, i) };
-				outfit.variants[i].id = variantId;
-				_variants.insert({ variantId, outfit.variants[i] });
-			}
-		} else {
-			throw std::exception{ "failed to validate" };
-		}
+	Util::ProcessEntities<Outfit>(a_context, a_pack, "outfits", [](std::string a_id, Outfit a_outfit) {
+		Load(a_id, a_outfit);
 	});
+}
+
+void Outfits::Load(std::string a_id, Outfit a_outfit)
+{
+	a_outfit.id = a_id;
+
+	if (a_outfit.Validate()) {
+		_outfits.insert({ a_id, a_outfit });
+
+		auto& outfit{ _outfits[a_id] };
+
+		for (auto i = 0; i < outfit.variants.size(); i++) {
+			const std::string variantId{ std::format("{}/{}", a_outfit.id, i) };
+			outfit.variants[i].id = variantId;
+			_variants.insert({ variantId, outfit.variants[i] });
+		}
+	} else {
+		throw std::exception{ "failed to validate" };
+	}
+}
+
+void Outfits::Reload(std::string a_context, std::string a_pack, std::string a_name) {
+	const std::string file{ std::format("data/skse/adversityframework/contexts/{}/packs/{}/Outfits/{}.yaml", a_context, a_pack, a_name) };
+	
+	const std::string id{ std::format("{}/{}", a_context, Util::Lower(a_name)) };
+	auto config = YAML::LoadFile(file);
+	Load(id, config.as<Outfit>());
 }
 
 Outfit* Outfits::GetOutfit(std::string a_context, std::string a_name)
@@ -116,6 +129,60 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 
 		if (valid)
 			return true;
+	}
+
+	return false;
+}
+
+bool Outfits::AddVariant(std::string a_context, std::string a_pack, std::string a_name)
+{
+	logger::info("AddVariant - {}/{}/{}", a_context, a_pack, a_name);
+
+	if (auto outfit = GetOutfit(a_context, a_name)) {
+		const auto& inventory = RE::PlayerCharacter::GetSingleton()->GetInventory();
+
+		std::vector<RE::TESObjectARMO*> worn;
+		for (const auto& [item, meta] : inventory) {
+			const auto& [count, data] = meta;
+
+			if (const auto& armo = item->As<RE::TESObjectARMO>(); data->IsWorn()) {
+				logger::info("found armo: {} {} {}", armo->GetFormEditorID(), armo->GetName(), armo->GetFormID());
+
+				if (armo->HasKeywordString("SOS_Genitals") || armo->HasKeywordString("SOS_PubicHair")) {
+					continue;
+				}
+
+				worn.emplace_back(armo);
+			}
+		}
+	
+		logger::info("Worn: {}", worn.size());
+		
+		if (worn.empty()) {
+			return false;
+		}
+
+		YAML::Node variantNode;
+
+		variantNode["severity"] = 1;
+		for (const auto& armo : worn) {
+			YAML::Node piece;
+			piece["name"] = armo->GetName();
+			piece["id"] = std::format("{}|{}", Util::HexString(armo->GetRawFormID()), armo->GetFile(0)->GetFilename());
+			variantNode["pieces"].push_back(piece);
+		}
+
+		const std::string file{ std::format("data/skse/adversityframework/contexts/{}/packs/{}/Outfits/{}.yaml", a_context, a_pack, a_name) };
+		auto config = YAML::LoadFile(file);
+
+		config["variants"].push_back(variantNode);
+
+		std::ofstream fout(file);
+		fout << config;
+
+		return true;
+	} else {
+		logger::error("AddVariant - failed to find outfit");
 	}
 
 	return false;

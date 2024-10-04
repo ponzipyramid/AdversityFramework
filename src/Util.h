@@ -27,6 +27,14 @@ namespace Adversity
 
 			return data;
 		}
+		static inline std::string Upper(std::string a_str)
+		{
+			std::string data{ a_str };
+			std::transform(data.begin(), data.end(), data.begin(),
+				[](unsigned char c) { return (char)std::toupper(c); });
+
+			return data;
+		}
 		static inline bool IsYAML(fs::path a_path)
 		{
 			return _exts.contains(a_path.extension().string());
@@ -160,6 +168,21 @@ namespace Adversity
 		{
 			static const std::regex pattern(R"(^[+-]?(?:\d+|\d*\.\d+)$)");
 			return std::regex_match(a_str, pattern);
+		}
+
+		static inline std::string HexString(int a_num)
+		{
+			std::stringstream stream;
+			stream << std::hex << a_num;
+			std::string result(stream.str());
+
+			result = Upper(result);
+
+			if (result.starts_with("FE")) {
+				result = result.substr(2);
+			}
+
+			return "0x" + result;
 		}
 
 	private:
