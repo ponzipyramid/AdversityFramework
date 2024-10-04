@@ -167,6 +167,39 @@ namespace Adversity::Papyrus
 		return variants;		
 	}
 
+	std::vector<std::string> FilterOutfitsBySeverity(RE::StaticFunctionTag*, std::vector<std::string> a_variants, int a_severity, bool a_greater, bool a_equal)
+	{
+		std::vector<std::string> filtered;
+		for (const auto& variantId : a_variants) {
+			if (const auto variant = Outfits::GetVariant(variantId)) {
+				const auto severity = variant->severity;
+
+				if (a_equal && severity == a_severity)
+					filtered.push_back(variantId);
+				else if (a_greater && severity > a_severity)
+					filtered.push_back(variantId);
+				else if (!a_greater && severity < a_severity)
+					filtered.push_back(variantId);
+			}
+		}
+
+		return filtered;
+	}
+
+	int GetOutfitSeverity(RE::StaticFunctionTag*, std::string a_id)
+	{
+		if (const auto variant = Outfits::GetVariant(a_id)) {
+			const auto severity = variant->severity;
+			return severity;
+		}
+		return 0;
+	}
+
+	std::string GetNextOutfit(RE::StaticFunctionTag*, std::string a_outfit, std::string a_current)
+	{
+		return "";
+	}
+
 	std::vector<RE::TESObjectARMO*> GetOutfitPieces(RE::StaticFunctionTag*, std::string a_id)
 	{
 		std::vector<RE::TESObjectARMO*> pieces;
@@ -487,7 +520,9 @@ namespace Adversity::Papyrus
 		// outfits
 		REGISTERFUNC(GetOutfits)
 		REGISTERFUNC(GetOutfitPieces)
+		REGISTERFUNC(GetOutfitSeverity)
 		REGISTERFUNC(ValidateOutfits)
+		REGISTERFUNC(FilterOutfitsBySeverity)
 
 		// tattoos
 		REGISTERFUNC(GetNumGroups)

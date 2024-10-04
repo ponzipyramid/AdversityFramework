@@ -20,10 +20,6 @@ void Outfits::Load(std::string a_context, std::string a_pack)
 				outfit.variants[i].id = variantId;
 				_variants.insert({ variantId, outfit.variants[i] });
 			}
-
-			for (auto& mapping : a_outfit.mappings) {
-				_mappings[mapping.in] = mapping;
-			}
 		} else {
 			throw std::exception{ "failed to validate" };
 		}
@@ -46,11 +42,6 @@ Variant* Outfits::GetVariant(std::string a_id)
 {
 	a_id = Util::Lower(a_id);
 	return _variants.count(a_id) ? &_variants[a_id] : nullptr;
-}
-
-Mapping* Outfits::GetMapping(RE::TESObjectARMO* a_in)
-{
-	return _mappings.count(a_in) ? &_mappings[a_in] : nullptr;
 }
 
 bool Outfits::Validate(std::vector<std::string> a_ids)
