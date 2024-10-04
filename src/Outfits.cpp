@@ -57,6 +57,54 @@ Variant* Outfits::GetVariant(std::string a_id)
 	return _variants.count(a_id) ? &_variants[a_id] : nullptr;
 }
 
+Variant* Outfits::GetNextOutfit(std::string a_variant)
+{
+	a_variant = Util::Lower(a_variant);
+
+	logger::info("GetNextOutfit - {}", a_variant);
+
+	if (const auto variant = GetVariant(a_variant)) {
+
+		if (variant->sequence.empty())
+			return nullptr;
+
+		const auto severity = variant->severity;
+
+		std::unordered_set<std::string> sequences;
+
+		for (const auto& seq : variant->sequence) {
+			sequences.insert(seq.key);
+		}
+
+		logger::info("GetNextOutfit - {} - {}", severity, sequences.size());
+
+		std::vector<Variant*> candidates;
+
+		auto splits = Util::Split(a_variant, "/");
+		splits.pop_back();
+		if (const auto outfit = GetOutfit(Util::Join(splits, "/"))) {
+			for (auto& var : outfit->variants) {
+				if (var.severity > severity) {
+					for (const auto& seq : var.sequence) {
+						if (sequences.contains(seq.key)) {
+							candidates.push_back(&var);
+						}
+					}
+				}
+			}
+		}
+
+		logger::info("GetNextOutfit - {}", candidates.size());
+
+		if (candidates.empty())
+			return nullptr;
+
+		return candidates[Util::Random(0, candidates.size() - 1)];
+	}
+
+	return nullptr;
+}
+
 bool Outfits::Validate(std::vector<std::string> a_ids)
 {
 	if (a_ids.empty()) return true;

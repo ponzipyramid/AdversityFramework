@@ -4,6 +4,11 @@
 
 namespace Adversity
 {
+	struct Sequence
+	{
+		std::string key;
+	};
+
 	struct Piece
 	{
 		inline bool IsValid() const { return armo != nullptr; }
@@ -25,8 +30,10 @@ namespace Adversity
 		}
 		std::string id;
 		std::vector<Piece> pieces;
+		std::vector<Sequence> sequence;
 		int severity;
 		std::unordered_set<std::string> tags;
+
 	};
 
 	struct Outfit
@@ -60,6 +67,7 @@ namespace Adversity
 		static Outfit* GetOutfit(std::string a_context, std::string a_name);
 		static Outfit* GetOutfit(std::string a_id);
 		static Variant* GetVariant(std::string a_id);
+		static Variant* GetNextOutfit(std::string a_variant);
 		static bool Validate(std::vector<std::string> a_ids);
 		static bool AddVariant(std::string a_context, std::string a_pack, std::string a_name);
 	private:
@@ -71,6 +79,16 @@ namespace Adversity
 namespace YAML
 {
 	using namespace Adversity;
+
+	template <>
+	struct convert<Sequence>
+	{
+		static bool decode(const Node& node, Sequence& rhs)
+		{
+			rhs.key = node["key"].as<std::string>();
+			return true;
+		}
+	};
 
 	template <>
 	struct convert<Piece>
@@ -101,6 +119,7 @@ namespace YAML
 		{
 			rhs.pieces = node["pieces"].as<std::vector<Piece>>();
 			rhs.severity = node["severity"].as<int>(0);
+			rhs.sequence = node["sequence"].as<std::vector<Sequence>>(std::vector<Sequence>{});
 
 			auto tags = node["tags"].as<std::vector<std::string>>(std::vector<std::string>{});
 			rhs.tags = std::unordered_set<std::string>{ tags.begin(), tags.end() };

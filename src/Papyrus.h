@@ -199,8 +199,12 @@ namespace Adversity::Papyrus
 		return 0;
 	}
 
-	std::string GetNextOutfit(RE::StaticFunctionTag*, std::string a_outfit, std::string a_current)
+	std::string GetNextOutfit(RE::StaticFunctionTag*, std::string a_variant)
 	{
+		if (const auto& variant = Outfits::GetNextOutfit(a_variant)) {
+			return variant->id;
+		}
+
 		return "";
 	}
 
@@ -526,6 +530,7 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(AddVariant)
 		REGISTERFUNC(GetOutfitPieces)
 		REGISTERFUNC(GetOutfitSeverity)
+		REGISTERFUNC(GetNextOutfit)
 		REGISTERFUNC(ValidateOutfits)
 		REGISTERFUNC(FilterOutfitsBySeverity)
 

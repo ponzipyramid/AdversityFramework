@@ -19,6 +19,14 @@ namespace Adversity
 
 			return d(gen);
 		}
+		static inline std::size_t Random(std::size_t a_min, std::size_t a_max)
+		{
+			std::random_device rd;
+			std::mt19937 gen(rd());
+			std::uniform_int_distribution<std::size_t> d{ a_min, a_max };
+
+			return d(gen);
+		}
 		static inline std::string Lower(std::string a_str)
 		{
 			std::string data{ a_str };
