@@ -161,10 +161,19 @@ namespace Adversity::Papyrus
 			}
 
 		} else {
-			logger::error("failed to find outfit: {}", a_name);
+			logger::error("failed to find outfit: {} {}", a_context, a_name);
 		}
 
-		return variants;		
+		return variants;
+	}
+
+	std::vector<std::string> GetOutfitTags(RE::StaticFunctionTag*, std::string a_variant)
+	{
+		if (const auto& variant = Outfits::GetVariant(a_variant)) {
+			return std::vector<std::string>{ variant->tags.begin(), variant->tags.end() };
+		}
+
+		return std::vector<std::string>{};
 	}
 
 	bool AddVariant(RE::StaticFunctionTag*, std::string a_context, std::string a_pack, std::string a_name) {
@@ -184,6 +193,19 @@ namespace Adversity::Papyrus
 					filtered.push_back(variantId);
 				else if (!a_greater && severity < a_severity)
 					filtered.push_back(variantId);
+			}
+		}
+
+		return filtered;
+	}
+
+	std::vector<std::string> FilterOutfitsByTags(RE::StaticFunctionTag*, std::vector<std::string> a_variants, std::vector<std::string> a_tags, bool a_all, bool a_invert)
+	{
+		std::vector<std::string> filtered;
+		for (const auto& variantId : a_variants) {
+			if (const auto variant = Outfits::GetVariant(variantId)) {
+				if (variant->HasTags(a_tags, a_all) != a_invert) {
+				}
 			}
 		}
 
@@ -435,6 +457,9 @@ namespace Adversity::Papyrus
 			Events::Filter(events, [](Event* a_event) {
 				if (const auto cooldown = Events::GetValue(a_event->GetId(), "cooldown", 0, true)) {
 					const auto lastStopped = Events::GetValue(a_event->GetId(), "last-stopped", -100, false);
+
+					logger::info("FilterEventsByCooldown - {} - cooldown = {} - lastStopped = {}", a_event->GetId(), cooldown, lastStopped);
+
 					if (Util::GetGameTime() - lastStopped < cooldown) {
 						return false;
 					}
@@ -530,9 +555,11 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(AddVariant)
 		REGISTERFUNC(GetOutfitPieces)
 		REGISTERFUNC(GetOutfitSeverity)
+		REGISTERFUNC(GetOutfitTags)
 		REGISTERFUNC(GetNextOutfit)
 		REGISTERFUNC(ValidateOutfits)
 		REGISTERFUNC(FilterOutfitsBySeverity)
+		REGISTERFUNC(FilterOutfitsByTags)
 
 		// tattoos
 		REGISTERFUNC(GetNumGroups)

@@ -44,14 +44,12 @@ namespace Adversity
 		template <typename T>
 		static T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
 		{
-			logger::info("looking for {} on {}", a_key, a_actor->GetActorBase()->GetName());
 			if (const auto data = GetData(a_context, a_actor, a_key)) {
-				logger::info("found data {} on {}", a_key, a_actor->GetActorBase()->GetName());
 				if (std::holds_alternative<T>(*data)) {
 					return std::get<T>(*data);
 				} else {
 					return a_default;
-				}				
+				}			
 			}
 
 			return a_default;
@@ -61,6 +59,23 @@ namespace Adversity
 		{
 			return SetData(a_context, a_actor, a_key, GenericData{ a_val });
 		}
+
+		/*template <typename T>
+		static T GetTraitValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
+		{
+			if (const auto& actor = GetActor(a_context, a_actor)) {
+				const auto& traits = actor->GetTraits();
+				for (const auto& traitId : traits) {
+					if (const auto& trait = GetTrait(traitId)) {
+						if (const auto& value = trait->GetValue<T>(a_key)) {
+							return value;
+						}
+					}
+				}
+			}
+
+			return a_default;
+		}*/
 
 		static inline void PersistAll()
 		{
@@ -92,25 +107,40 @@ namespace Adversity
 			_dirty.erase(a_context);
 		}
 	private:
-		static inline GenericData* GetData(std::string a_context, RE::Actor* a_actor, std::string a_key)
+		static inline Actor* GetActor(std::string a_context, RE::Actor* a_actor)
 		{
 			if (const auto base = a_actor->GetActorBase()) {
 				const auto id = base->GetName();
 				if (_actors[a_context].count(id)) {
-					return _actors[a_context][id].GetValue(a_key);
-				} 
+					return &_actors[a_context][id];
+				}
+			}
+
+			return nullptr;
+		}
+
+		static inline Trait* GetTrait(std::string a_context, std::string a_id)
+		{
+			if (_traits[a_context].count(a_id)) {
+				return &_traits[a_context][a_id];
+			}
+
+			return nullptr;
+		}
+
+		static inline GenericData* GetData(std::string a_context, RE::Actor* a_actor, std::string a_key)
+		{
+			if (const auto& actor = GetActor(a_context, a_actor)) {
+				return actor->GetValue(a_key);
 			}
 
 			return nullptr;
 		}
 		static inline bool SetData(std::string a_context, RE::Actor* a_actor, std::string a_key, GenericData a_data)
 		{
-			if (const auto base = a_actor->GetActorBase()) {
-				const auto id = base->GetName();
-				_actors[a_context][id].SetValue(a_key, a_data);
-
+			if (const auto& actor = GetActor(a_context, a_actor)) {
 				_dirty[a_context] = true;
-
+				actor->SetValue(a_key, a_data);
 				return true;
 			}
 

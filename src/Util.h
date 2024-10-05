@@ -186,11 +186,14 @@ namespace Adversity
 
 			result = Upper(result);
 
-			if (result.starts_with("FE")) {
-				result = result.substr(2);
-			}
+			return result;
+		}
 
-			return "0x" + result;
+		static inline std::string GetFormIDString(RE::TESForm* a_form)
+		{
+			auto str = HexString(a_form->GetFormID());
+			str = str.substr(2);
+			return "0x" + str;
 		}
 
 	private:

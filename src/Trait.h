@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Event.h"
+#include "Meta.h"
 
 namespace
 {
@@ -30,7 +31,7 @@ namespace Adversity
 		std::unordered_set<std::string> dislike;
 	};
 
-	class Trait
+	class Trait : public Meta
 	{
 	public:
 		inline void Init(std::string a_context, std::string a_id)
@@ -103,6 +104,8 @@ namespace YAML
 			rhs._faction = RE::TESForm::LookupByEditorID<RE::TESFaction>(faction);
 
 			rhs._eventPrefs = node["events"].as<PreferenceList>(PreferenceList{});
+
+			rhs.Read(node);
 
 			return true;
 		}

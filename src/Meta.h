@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Trait.h"
 #include "Util.h"
 #include "Serialization.h"
 
@@ -98,6 +97,7 @@ namespace Adversity
 
 			return nullptr;
 		}
+
 		inline void SetValue(std::string a_key, GenericData a_value)
 		{
 			a_key = Util::Lower(a_key);

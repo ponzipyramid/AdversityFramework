@@ -12,6 +12,8 @@ namespace Adversity
 	struct Piece
 	{
 		inline bool IsValid() const { return armo != nullptr; }
+		std::string id;
+		std::string name;
 		RE::TESObjectARMO* armo = nullptr;
 		bool optional;
 		bool nothing;
@@ -19,14 +21,34 @@ namespace Adversity
 
 	struct Variant
 	{
-		inline bool IsValid() const {
+		inline bool IsValid() const 
+		{
 			for (const auto& piece : pieces) {
 				if (!piece.IsValid()) {
+					logger::info("piece: {} {} is invalid", piece.name, piece.id);
 					return false;
 				}
 			}
 
 			return true;
+		}
+		inline bool HasTags(std::vector<std::string> a_tags, bool a_all) const
+		{
+			if (a_all) {
+				for (const auto& tag : a_tags) {
+					if (!tags.contains(tag))
+						return false;
+				}
+
+				return true;
+			} else {
+				for (const auto& tag : a_tags) {
+					if (tags.contains(tag))
+						return true;
+				}
+
+				return false;
+			}
 		}
 		std::string id;
 		std::vector<Piece> pieces;
@@ -95,8 +117,9 @@ namespace YAML
 	{
 		static bool decode(const Node& node, Piece& rhs)
 		{
-			const auto id = node["id"].as<std::string>();
-			rhs.armo = Util::GetFormFromString<RE::TESObjectARMO>(id);
+			rhs.id = node["id"].as<std::string>();
+			rhs.name = node["name"].as<std::string>("");
+			rhs.armo = Util::GetFormFromString<RE::TESObjectARMO>(rhs.id);
 
 			if (rhs.armo) {
 				const auto kwds = node["addKeywords"].as<std::vector<std::string>>(std::vector<std::string>{});
@@ -118,6 +141,16 @@ namespace YAML
 		static bool decode(const Node& node, Variant& rhs)
 		{
 			rhs.pieces = node["pieces"].as<std::vector<Piece>>();
+
+			const auto kwds = node["addKeywords"].as<std::vector<std::string>>(std::vector<std::string>{});
+			for (const auto& piece : rhs.pieces) {
+				if (const auto& armo = piece.armo) {
+					for (const auto& kwd : kwds) {
+						Util::AddKwd(armo, kwd);
+					}
+				}
+			}
+
 			rhs.severity = node["severity"].as<int>(0);
 			rhs.sequence = node["sequence"].as<std::vector<Sequence>>(std::vector<Sequence>{});
 

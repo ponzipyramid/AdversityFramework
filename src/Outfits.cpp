@@ -141,9 +141,9 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 		logger::info("validating - {}", id);
 	}
 
+	bool valid = true;
 	std::vector<Variant*> variants;
 	for (const auto& id : a_ids) {
-		bool valid = true;
 		const auto variant = GetVariant(id);
 		if (!variant) {
 			logger::info("{} variant could not be found", id);
@@ -158,7 +158,6 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 				continue;
 
 			if (!worn.contains(piece.armo)) {
-				
 				RE::TESObjectARMO* wornPiece = nullptr;
 				for (const auto armo : wornList) {
 					if (armo->HasPartOf(piece.armo->GetSlotMask())) {
@@ -174,12 +173,9 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 				}
 			}
 		}
-
-		if (valid)
-			return true;
 	}
-
-	return false;
+	logger::info("Variant Valid = {}", valid);
+	return valid;
 }
 
 bool Outfits::AddVariant(std::string a_context, std::string a_pack, std::string a_name)
@@ -193,14 +189,16 @@ bool Outfits::AddVariant(std::string a_context, std::string a_pack, std::string 
 		for (const auto& [item, meta] : inventory) {
 			const auto& [count, data] = meta;
 
-			if (const auto& armo = item->As<RE::TESObjectARMO>(); data->IsWorn()) {
-				logger::info("found armo: {} {} {}", armo->GetFormEditorID(), armo->GetName(), armo->GetFormID());
+			if (data->IsWorn()) {
+				if (const auto& armo = item->As<RE::TESObjectARMO>()) {
+					logger::info("found armo: {} {} {}", armo->GetFormEditorID(), armo->GetName(), Util::GetFormIDString(armo));
 
-				if (armo->HasKeywordString("SOS_Genitals") || armo->HasKeywordString("SOS_PubicHair")) {
-					continue;
+					if (armo->HasKeywordString("SOS_Genitals") || armo->HasKeywordString("SOS_PubicHair")) {
+						continue;
+					}
+
+					worn.emplace_back(armo);
 				}
-
-				worn.emplace_back(armo);
 			}
 		}
 	
@@ -216,7 +214,7 @@ bool Outfits::AddVariant(std::string a_context, std::string a_pack, std::string 
 		for (const auto& armo : worn) {
 			YAML::Node piece;
 			piece["name"] = armo->GetName();
-			piece["id"] = std::format("{}|{}", Util::HexString(armo->GetRawFormID()), armo->GetFile(0)->GetFilename());
+			piece["id"] = std::format("{}|{}", Util::GetFormIDString(armo), armo->GetFile(0)->GetFilename());
 			variantNode["pieces"].push_back(piece);
 		}
 
