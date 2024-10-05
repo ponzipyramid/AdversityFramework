@@ -88,21 +88,32 @@ namespace Adversity
 			return node;
 		}
 
-		inline GenericData* GetValue(std::string a_key)
+		template <typename T>
+		inline T GetValue(const std::string& a_key, T a_default)
 		{
-			a_key = Util::Lower(a_key);
-			if (_data.count(a_key)) {
-				return &_data[a_key].second;
+			const auto key{ Util::Lower(a_key) };
+
+			const auto iter = _data.find(key);
+			if (iter == _data.end()) {
+				return a_default;
 			}
 
-			return nullptr;
+			const auto& value = iter->second.second;
+			if (std::holds_alternative<T>(value)) {
+				return std::get<T>(value);
+			}
+
+			return a_default;
 		}
 
-		inline void SetValue(std::string a_key, GenericData a_value)
+		template <typename T>
+		inline void SetValue(const std::string& a_key, T a_value)
 		{
-			a_key = Util::Lower(a_key);
+			const auto key{ Util::Lower(a_key) };
+			GenericData value{ a_value };
+
 			std::vector<std::string> raw;
-			switch (a_value.index()) {
+			switch (value.index()) {
 			case 0:
 				{
 					raw.push_back("");
@@ -110,33 +121,33 @@ namespace Adversity
 				}
 			case 1:
 				{
-					raw.push_back(std::to_string(std::get<bool>(a_value)));
+					raw.push_back(std::to_string(std::get<bool>(value)));
 					break;
 				}
 			case 2:
 				{
-					raw.push_back(std::to_string(std::get<int>(a_value)));
+					raw.push_back(std::to_string(std::get<int>(value)));
 					break;
 				}
 			case 3:
 				{
-					raw.push_back(std::to_string(std::get<float>(a_value)));
+					raw.push_back(std::to_string(std::get<float>(value)));
 					break;
 				}
 			case 4:
 				{
-					raw.push_back(std::get<std::string>(a_value));
+					raw.push_back(std::get<std::string>(value));
 					break;
 				}
 			case 5:
 				{
-					const auto form = std::get<RE::TESForm*>(a_value);
+					const auto form = std::get<RE::TESForm*>(value);
 					raw.push_back(form ? form->GetFormEditorID() : "");
 					break;
 				}
 			case 6:
 				{
-					const auto list = std::get<std::vector<bool>>(a_value);
+					const auto list = std::get<std::vector<bool>>(value);
 					for (const auto item : list) {
 						raw.push_back(std::to_string(item));
 					}
@@ -144,7 +155,7 @@ namespace Adversity
 				}
 			case 7:
 				{
-					const auto list = std::get<std::vector<int>>(a_value);
+					const auto list = std::get<std::vector<int>>(value);
 					for (const auto item : list) {
 						raw.push_back(std::to_string(item));
 					}
@@ -152,7 +163,7 @@ namespace Adversity
 				}
 			case 8:
 				{
-					const auto list = std::get<std::vector<float>>(a_value);
+					const auto list = std::get<std::vector<float>>(value);
 					for (const auto item : list) {
 						raw.push_back(std::to_string(item));
 					}
@@ -160,7 +171,7 @@ namespace Adversity
 				}
 			case 9:
 				{
-					const auto list = std::get<std::vector<std::string>>(a_value);
+					const auto list = std::get<std::vector<std::string>>(value);
 					for (const auto item : list) {
 						raw.push_back(item);
 					}
@@ -168,7 +179,7 @@ namespace Adversity
 				}
 			case 10:
 				{
-					const auto list = std::get<std::vector<RE::TESForm*>>(a_value);
+					const auto list = std::get<std::vector<RE::TESForm*>>(value);
 					for (const auto item : list) {
 						raw.push_back(item ? item->GetFormEditorID() : "");
 					}
@@ -178,7 +189,7 @@ namespace Adversity
 				break;
 			}
 
-			_data[a_key] = std::make_pair(raw, a_value);
+			_data[key] = std::make_pair(raw, value);
 		}
 	private:
 		static GenericData ConvertToGeneric(const std::string& a_str)

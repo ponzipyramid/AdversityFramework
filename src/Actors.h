@@ -14,7 +14,7 @@ namespace Adversity
 			const auto ids = GetTraitIds(a_context, a_actor);
 
 			std::vector<Trait*> traits;
-			
+
 			for (const auto& id : ids) {
 				traits.push_back(&_traits[a_context][id]);
 			}
@@ -44,12 +44,8 @@ namespace Adversity
 		template <typename T>
 		static T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
 		{
-			if (const auto data = GetData(a_context, a_actor, a_key)) {
-				if (std::holds_alternative<T>(*data)) {
-					return std::get<T>(*data);
-				} else {
-					return a_default;
-				}			
+			if (const auto& actor = GetActor(a_context, a_actor)) {
+				return actor->GetValue<T>(a_key, a_default);
 			}
 
 			return a_default;
@@ -57,7 +53,12 @@ namespace Adversity
 		template <typename T>
 		static bool SetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_val)
 		{
-			return SetData(a_context, a_actor, a_key, GenericData{ a_val });
+			if (const auto& actor = GetActor(a_context, a_actor)) {
+				_dirty[a_context] = true;
+				actor->SetValue<T>(a_key, a_val);
+				return true;
+			}
+			return false;
 		}
 
 		/*template <typename T>
@@ -126,25 +127,6 @@ namespace Adversity
 			}
 
 			return nullptr;
-		}
-
-		static inline GenericData* GetData(std::string a_context, RE::Actor* a_actor, std::string a_key)
-		{
-			if (const auto& actor = GetActor(a_context, a_actor)) {
-				return actor->GetValue(a_key);
-			}
-
-			return nullptr;
-		}
-		static inline bool SetData(std::string a_context, RE::Actor* a_actor, std::string a_key, GenericData a_data)
-		{
-			if (const auto& actor = GetActor(a_context, a_actor)) {
-				_dirty[a_context] = true;
-				actor->SetValue(a_key, a_data);
-				return true;
-			}
-
-			return false;
 		}
 
 		static inline std::unordered_map<std::string, std::unordered_map<std::string, Actor>> _actors;

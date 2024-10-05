@@ -20,21 +20,41 @@ namespace Adversity
 		template <typename T>
 		static T GetValue(const std::string& a_id, const std::string& a_key, T a_default, bool a_persist)
 		{
-			if (const auto data = Contexts::GetEventValue<T>(a_id, a_key, a_persist)) {
-				return data.value();
-			}
+			if (const auto& event = GetById(a_id)) {
+				if (const auto& data = GetContextData(event, a_persist)) {
+					return data->GetValue<T>(a_key, a_default);
+				}
 
-			// TODO: add default persistent metadata to events
+				return event->GetValue<T>(a_key, a_default);
+			}
 
 			return a_default;
 		}
 		template <typename T>
 		static bool SetValue(std::string a_id, std::string a_key, T a_val, bool a_persist)
 		{
-			return Contexts::SetEventValue<T>(a_id, a_key, a_val, a_persist);
+			if (const auto& event = GetById(a_id)) {
+				if (const auto& data = GetContextData(event, a_persist)) {
+					data->SetValue<T>(a_key, a_val);
+					return true;
+				}
+			}
+			
+			return false;
 		}
 
 	private:
+		static inline Meta* GetContextData(Event* a_event, bool a_persist)
+		{
+			if (const auto& context = Contexts::GetContext(a_event->GetContext(), a_persist)) {
+				if (const auto& meta = context->GetEventData(a_event->GetPackId(), a_event->GetName())) {
+					return meta;
+				}
+			}
+
+			return nullptr;
+		}
+
 		static inline std::unordered_map<std::string, Event> _events;
 		static inline std::unordered_map<std::string, std::vector<Event*>> _contexts;
 		static inline std::unordered_map<std::string, std::vector<Event*>> _packs;

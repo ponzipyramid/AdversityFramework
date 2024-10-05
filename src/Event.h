@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Util.h"
+#include "Meta.h"
 #include "Conditions/Conditional.h"
 
 using namespace Conditions;
@@ -34,7 +35,7 @@ namespace Adversity
 		bool With(const Conflict& a_other);
 	};
 
-	class Event : public Conditional
+	class Event : public Conditional, public Meta
 	{
 	public:
 		enum Status
@@ -172,6 +173,8 @@ namespace YAML
 			rhs._exclusive = node["exclusive"].as<std::string>("") == "true";
 
 			rhs._rawConditions = node["conditions"].as<std::vector<std::string>>(std::vector<std::string>{});
+
+			rhs.Read(node["config"]);
 
 			return true;
 		}

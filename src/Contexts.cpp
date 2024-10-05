@@ -51,47 +51,6 @@ void Contexts::Init()
 	}
 }
 
-Meta* Contexts::GetData(const std::string& a_id, bool a_persist)
-{
-	const auto key = Util::Lower(a_id);
-	auto& data = a_persist ? _persistent : _runtime;
-	if (data.count(key)) {
-		return data[key].GetConfig();
-	}
-
-	return nullptr;
-}
-
-Meta* Contexts::GetEventData(const std::string& a_id, bool a_persist, bool a_create)
-{
-	const auto id = Util::Lower(a_id);
-	const auto splits = Util::Split(id, "/");
-
-	if (splits.size() != 3)
-		return nullptr;
-
-	auto& data = a_persist ? _persistent : _runtime;
-
-	if (data.count(splits[0])) {
-		auto& context = data[splits[0]];
-		return context.GetEventData(splits[1], splits[2], a_create);
-	} else {
-		logger::info("did not find context");
-	}
-
-	return nullptr;
-}
-
-GenericData* Contexts::GetEventField(const std::string& a_id, const std::string& a_key, bool a_persist)
-{
-	const auto key = Util::Lower(a_key);
-
-	if (const auto& data = GetEventData(a_id, a_persist)) {
-		return data->GetValue(key);
-	}
-
-	return nullptr;
-}
 void Contexts::Persist(const std::string& a_id)
 {
 	if (!_persistent.count(a_id)) {
@@ -126,7 +85,8 @@ void Contexts::PersistAll()
 void Contexts::Save(SKSE::SerializationInterface* a_intfc)
 {
 	Serialization::Write(a_intfc, _runtime.size());
-	for (const auto& [_, context] : _runtime) {
+	for (const auto& [id, context] : _runtime) {
+		Serialization::Write(a_intfc, id);
 		context.Serialize(a_intfc);
 	}
 }
@@ -135,7 +95,8 @@ void Contexts::Load(SKSE::SerializationInterface* a_intfc)
 {
 	auto i = Serialization::Read<std::size_t>(a_intfc);
 	for (; i > 0; i--) {
-		Context context{ a_intfc };
+		const auto& id = Serialization::Read<std::string>(a_intfc);
+		Context context{ id, a_intfc };
 		_runtime[context.GetId()] = context;
 	}
 }
