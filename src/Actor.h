@@ -6,14 +6,23 @@
 
 namespace Adversity
 {
+	struct AttachedTrait
+	{
+		std::string id;
+		int8_t rank;
+	};
+
 	class Actor : public Meta
 	{
 	public:
+		Actor() = default;
+		Actor(RE::TESNPC* a_base) :
+			_base(a_base) {} 
 		inline std::string GetId() const { return _base->GetName(); }
-		inline std::vector<std::string> GetTraits() { return _traits; }
+		inline std::vector<AttachedTrait> GetTraits() { return _traits; }
 	private:
 		RE::TESNPC* _base;
-		std::vector<std::string> _traits;
+		std::vector<AttachedTrait> _traits;
 
 		friend struct YAML::convert<Actor>;
 	};
@@ -23,6 +32,28 @@ namespace YAML
 {
 	using namespace Adversity;
 
+	template<>
+	struct convert<AttachedTrait>
+	{
+		static bool decode(const Node& node, AttachedTrait& rhs)
+		{
+			rhs.id = Util::Lower(node["id"].as<std::string>());
+			rhs.rank = node["rank"].as<int8_t>(0);
+
+			return true;
+		}
+
+		static Node encode(const AttachedTrait& rhs)
+		{
+			Node node;
+
+			node["id"] = rhs.id;
+			node["rank"] = rhs.rank;
+
+			return node;
+		}
+	};
+
 	template <>
 	struct convert<Actor>
 	{
@@ -30,12 +61,8 @@ namespace YAML
 		{
 			const auto id = node["id"].as<std::string>("");
 			rhs._base = RE::TESForm::LookupByEditorID<RE::TESNPC>(id);
-
-			const auto traits = node["traits"].as<std::vector<std::string>>(std::vector<std::string>{});
-			for (const auto& trait : traits) {
-				rhs._traits.push_back(Util::Lower(trait));
-			}
-
+			rhs._traits = node["traits"].as<std::vector<AttachedTrait>>(std::vector<AttachedTrait>{});
+			
 			rhs.Read(node["data"]);
 
 			return true;

@@ -68,7 +68,7 @@ Variant* Outfits::GetNextOutfit(std::string a_variant)
 		if (variant->sequence.empty())
 			return nullptr;
 
-		const auto severity = variant->severity;
+		const auto severity = variant->severity + 1;
 
 		std::unordered_set<std::string> sequences;
 
@@ -84,7 +84,7 @@ Variant* Outfits::GetNextOutfit(std::string a_variant)
 		splits.pop_back();
 		if (const auto outfit = GetOutfit(Util::Join(splits, "/"))) {
 			for (auto& var : outfit->variants) {
-				if (var.severity > severity) {
+				if (var.severity == severity) {
 					for (const auto& seq : var.sequence) {
 						if (sequences.contains(seq.key)) {
 							candidates.push_back(&var);
@@ -167,7 +167,7 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 				}
 
 				if ((wornPiece && !wornPiece->HasKeywordInArray(allowedKwds, false)) || (!wornPiece && !piece.nothing)) {
-					logger::info("{} is not a valid due", id);
+					logger::info("{} is not valid due to {} instead of {}", id, wornPiece ? wornPiece->GetName() : "none", piece.armo->GetName());
 					valid = false;
 					break;
 				}

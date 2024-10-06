@@ -88,6 +88,24 @@ namespace Adversity
 			return node;
 		}
 
+		template<typename T>
+		inline bool HasValue(const std::string& a_key)
+		{
+			const auto key{ Util::Lower(a_key) };
+
+			const auto iter = _data.find(key);
+			if (iter == _data.end()) {
+				return false;
+			}
+
+			const auto& value = iter->second.second;
+			if (std::holds_alternative<T>(value)) {
+				return true;
+			}
+
+			return false;
+		}
+
 		template <typename T>
 		inline T GetValue(const std::string& a_key, T a_default)
 		{

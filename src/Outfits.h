@@ -171,8 +171,12 @@ namespace YAML
 
 			const auto kwds = node["addKeywords"].as<std::vector<std::string>>(std::vector<std::string>{});
 			for (const auto& variant : rhs.variants) {
+
+				const auto price = 500 / (int)variant.pieces.size();
+
 				for (const auto& piece : variant.pieces) {
 					if (const auto armo = piece.armo) {
+						armo->value = price > armo->value ? armo->value : price;
 						for (const auto& kwd : kwds) {
 							Util::AddKwd(armo, kwd);
 						}

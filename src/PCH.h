@@ -150,6 +150,8 @@ namespace Adversity::Papyrus
 		return Actors::SetValue<type>(a_context, a_actor, a_key, a_val); \
 	} \
 
+	
+
 #define CONFIGFUNCS(configType)\
 	configType(Bool, bool)\
 	configType(Int, int) \

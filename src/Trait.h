@@ -105,7 +105,7 @@ namespace YAML
 
 			rhs._eventPrefs = node["events"].as<PreferenceList>(PreferenceList{});
 
-			rhs.Read(node);
+			rhs.Read(node["data"]);
 
 			return true;
 		}

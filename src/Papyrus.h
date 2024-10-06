@@ -50,8 +50,6 @@ namespace Adversity::Papyrus
 		return std::vector<std::string>{ tags.begin(), tags.end() };
 	}
 
-	CONFIGFUNCS(CONTEXTCONFIG)
-
 	std::string GetPackName(RE::StaticFunctionTag*, std::string a_pack) {
 		if (const auto pack = Packs::GetById(a_pack)) {
 			return pack->GetName();
@@ -205,6 +203,7 @@ namespace Adversity::Papyrus
 		for (const auto& variantId : a_variants) {
 			if (const auto variant = Outfits::GetVariant(variantId)) {
 				if (variant->HasTags(a_tags, a_all) != a_invert) {
+					filtered.push_back(variantId);
 				}
 			}
 		}
@@ -367,9 +366,6 @@ namespace Adversity::Papyrus
 		return false;
 	}
 
-	CONFIGFUNCS(EVENTCONFIG)
-
-
 	void SetLock(RE::StaticFunctionTag*, bool a_enable)
 	{
 		Util::GetFormById<RE::TESGlobal>(0x81B)->value = (float)a_enable;
@@ -472,6 +468,10 @@ namespace Adversity::Papyrus
 		return Events::GetIds(filtered);
 	}
 
+	inline void InitializeActor(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor)
+	{
+		Actors::InitializeActor(a_context, a_actor);
+	}
 	inline std::vector<int> WeighEventsByActor(RE::StaticFunctionTag*, std::string a_context, RE::Actor* a_actor, std::vector<std::string> a_events, int a_weight, bool a_considerDislikes, bool a_stack)
 	{
 		const auto traits = Actors::GetTraits(a_context, a_actor);
@@ -500,7 +500,9 @@ namespace Adversity::Papyrus
 	{
 		return Actors::GetTraitIds(a_context, a_actor);
 	}
-
+	
+	CONFIGFUNCS(CONTEXTCONFIG)
+	CONFIGFUNCS(EVENTCONFIG)
 	CONFIGFUNCS(ACTORCONFIG)
 
 	inline bool RegisterFuncs(VM* a_vm)
@@ -509,7 +511,6 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetContextEvents)
 		REGISTERFUNC(GetContextTags)
 		REGISTERFUNC(GetPacks)
-		REGISTERCONFIG(REGISTERCONTEXT)
 
 		// packs
 		REGISTERFUNC(GetPackQuest)
@@ -532,7 +533,6 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(FilterEventsByValid)
 		REGISTERFUNC(FilterEventsByCooldown)
 		REGISTERFUNC(WeighEventsByActor)
-		REGISTERCONFIG(REGISTEREVENT)
 
 		// willpower 
 		REGISTERFUNC(GetWillpower)
@@ -566,6 +566,12 @@ namespace Adversity::Papyrus
 		REGISTERFUNC(GetTattooGroup)
 
 		// actors
+		REGISTERFUNC(InitializeActor)
+		REGISTERFUNC(GetTraits)
+
+		// configs
+		REGISTERCONFIG(REGISTERCONTEXT)
+		REGISTERCONFIG(REGISTEREVENT)
 		REGISTERCONFIG(REGISTERACTOR)
 
 		return true;

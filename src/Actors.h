@@ -9,7 +9,35 @@ namespace Adversity
 	public:
 		static void Load(std::string a_id);
 
-		static std::vector<Trait*> GetTraits(std::string a_context, RE::Actor* a_actor)
+		static inline void InitializeActor(std::string a_context, RE::Actor* a_actor)
+		{
+			if (!a_actor) {
+				return;
+			}
+
+			if (const auto& actor = GetActor(a_context, a_actor)) {
+				// clean up current traits
+				for (const auto& [_, trait] : _traits[a_context]) {
+					if (const auto& faction = trait.GetFaction()) {
+						if (a_actor->GetFactionRank(faction, false) > -1) {
+							logger::info("removing from faction {}", faction->GetFormEditorID());
+							a_actor->RemoveFromFaction(faction);
+						}
+					}
+				}
+
+				for (const auto& attached : actor->GetTraits()) {
+					if (const auto& trait = GetTrait(a_context, attached.id)) {
+						if (const auto& faction = trait->GetFaction()) {
+							a_actor->AddToFaction(faction, attached.rank);
+							logger::info("adding to faction {}", faction->GetFormEditorID());
+						}
+					}
+				}
+			}
+		}
+
+		static inline std::vector<Trait*> GetTraits(std::string a_context, RE::Actor* a_actor)
 		{
 			const auto ids = GetTraitIds(a_context, a_actor);
 
@@ -21,19 +49,17 @@ namespace Adversity
 
 			return traits;
 		}
-		static std::vector<std::string> GetTraitIds(std::string a_context, RE::Actor* a_actor)
+		static inline std::vector<std::string> GetTraitIds(std::string a_context, RE::Actor* a_actor)
 		{
 			std::vector<std::string> traits;
 
 			if (!a_actor)
 				return traits;
 
-			if (const auto base = a_actor->GetActorBase()) {
-				if (_actors[a_context].count(base->GetName())) {
-					for (auto traitId : _actors[a_context][base->GetName()].GetTraits()) {
-						if (_traits[a_context].count(traitId)) {
-							traits.push_back(traitId);
-						}
+			if (const auto& actor = GetActor(a_context, a_actor)) {
+				for (auto attached : _actors[a_context][actor->GetId()].GetTraits()) {
+					if (_traits[a_context].count(attached.id)) {
+						traits.push_back(attached.id);
 					}
 				}
 			}
@@ -42,17 +68,34 @@ namespace Adversity
 		}
 
 		template <typename T>
-		static T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
+		static inline T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
 		{
 			if (const auto& actor = GetActor(a_context, a_actor)) {
-				return actor->GetValue<T>(a_key, a_default);
+				if (actor->HasValue<T>(a_key)) {
+					return actor->GetValue<T>(a_key, a_default);
+				}
+
+				const auto& traits = actor->GetTraits();
+				for (const auto& attached : traits) {
+					if (const auto& trait = GetTrait(a_context, attached.id)) {
+						a_actor->AddToFaction(trait->GetFaction(), 0);
+					}
+				}
 			}
 
 			return a_default;
 		}
 		template <typename T>
-		static bool SetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_val)
+		static inline bool SetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_val)
 		{
+			if (!a_actor)
+				return false;
+
+			if (!GetActor(a_context, a_actor)) {
+				Actor actor{ a_actor->GetActorBase() };
+				_actors[a_context].insert({ actor.GetId(), actor});
+			}
+
 			if (const auto& actor = GetActor(a_context, a_actor)) {
 				_dirty[a_context] = true;
 				actor->SetValue<T>(a_key, a_val);
@@ -60,23 +103,6 @@ namespace Adversity
 			}
 			return false;
 		}
-
-		/*template <typename T>
-		static T GetTraitValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
-		{
-			if (const auto& actor = GetActor(a_context, a_actor)) {
-				const auto& traits = actor->GetTraits();
-				for (const auto& traitId : traits) {
-					if (const auto& trait = GetTrait(traitId)) {
-						if (const auto& value = trait->GetValue<T>(a_key)) {
-							return value;
-						}
-					}
-				}
-			}
-
-			return a_default;
-		}*/
 
 		static inline void PersistAll()
 		{
