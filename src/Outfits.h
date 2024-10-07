@@ -89,7 +89,7 @@ namespace Adversity
 		static Outfit* GetOutfit(std::string a_context, std::string a_name);
 		static Outfit* GetOutfit(std::string a_id);
 		static Variant* GetVariant(std::string a_id);
-		static Variant* GetNextOutfit(std::string a_variant);
+		static Variant* GetNextOutfit(std::string a_variant, int a_targetSeverity);
 		static bool Validate(std::vector<std::string> a_ids);
 		static bool AddVariant(std::string a_context, std::string a_pack, std::string a_name);
 	private:

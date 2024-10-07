@@ -16,12 +16,12 @@ namespace Adversity
 	{
 	public:
 		Actor() = default;
-		Actor(RE::TESNPC* a_base) :
-			_base(a_base) {} 
-		inline std::string GetId() const { return _base->GetName(); }
+		Actor(RE::Actor* a_base) :
+			_base(a_base) {}
+		inline RE::FormID GetId() const { return _base ? _base->GetFormID() : 0; }
 		inline std::vector<AttachedTrait> GetTraits() { return _traits; }
 	private:
-		RE::TESNPC* _base;
+		RE::Actor* _base;
 		std::vector<AttachedTrait> _traits;
 
 		friend struct YAML::convert<Actor>;
@@ -60,7 +60,10 @@ namespace YAML
 		static bool decode(const Node& node, Actor& rhs)
 		{
 			const auto id = node["id"].as<std::string>("");
-			rhs._base = RE::TESForm::LookupByEditorID<RE::TESNPC>(id);
+			rhs._base = Util::GetFormFromString<RE::Actor>(id);
+
+			logger::info("Actor Data: {} = {}", id, rhs._base != nullptr);
+
 			rhs._traits = node["traits"].as<std::vector<AttachedTrait>>(std::vector<AttachedTrait>{});
 			
 			rhs.Read(node["data"]);

@@ -43,10 +43,13 @@ namespace Adversity
 
 		inline void Serialize(SKSE::SerializationInterface* a_intfc) const
 		{
+			logger::info("serializing context");
+
 			Meta::Serialize(a_intfc);
 			Serialization::Write(a_intfc, _events.size());
 			for (const auto& [id, data] : _events) {
 				Serialization::Write(a_intfc, id);
+				logger::info("serializing event {}", id);
 				data.Serialize(a_intfc);
 			}
 		}

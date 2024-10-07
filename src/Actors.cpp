@@ -19,7 +19,9 @@ void Actors::Load(std::string a_context)
 	const auto actorFile = YAML::LoadFile(actors);
 	const auto actorData = actorFile.as<std::vector<Actor>>();
 	for (const auto& actor : actorData) {
-		_actors[a_context].insert({ actor.GetId(), actor });
+		if (const auto id = actor.GetId()) {
+			_actors[a_context].insert({ id, actor });
+		}
 	}
 
 	const std::string dir{ base + "/Traits" };

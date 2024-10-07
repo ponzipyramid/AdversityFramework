@@ -92,7 +92,7 @@ namespace Adversity
 				return false;
 
 			if (!GetActor(a_context, a_actor)) {
-				Actor actor{ a_actor->GetActorBase() };
+				Actor actor{ a_actor };
 				_actors[a_context].insert({ actor.GetId(), actor});
 			}
 
@@ -136,11 +136,10 @@ namespace Adversity
 	private:
 		static inline Actor* GetActor(std::string a_context, RE::Actor* a_actor)
 		{
-			if (const auto base = a_actor->GetActorBase()) {
-				const auto id = base->GetName();
-				if (_actors[a_context].count(id)) {
-					return &_actors[a_context][id];
-				}
+			const auto formId = a_actor->GetFormID();
+
+			if (_actors[a_context].count(formId)) {
+				return &_actors[a_context][formId];
 			}
 
 			return nullptr;
@@ -155,7 +154,7 @@ namespace Adversity
 			return nullptr;
 		}
 
-		static inline std::unordered_map<std::string, std::unordered_map<std::string, Actor>> _actors;
+		static inline std::unordered_map<std::string, std::unordered_map<RE::FormID, Actor>> _actors;
 		static inline std::unordered_map<std::string, std::unordered_map<std::string, Trait>> _traits;
 		static inline std::unordered_map<std::string, bool> _dirty;
 		static inline std::unordered_map<std::string, std::mutex> _locks;

@@ -220,9 +220,9 @@ namespace Adversity::Papyrus
 		return 0;
 	}
 
-	std::string GetNextOutfit(RE::StaticFunctionTag*, std::string a_variant)
+	std::string GetNextOutfit(RE::StaticFunctionTag*, std::string a_variant, int a_targetSeverity)
 	{
-		if (const auto& variant = Outfits::GetNextOutfit(a_variant)) {
+		if (const auto& variant = Outfits::GetNextOutfit(a_variant, a_targetSeverity)) {
 			return variant->id;
 		}
 
