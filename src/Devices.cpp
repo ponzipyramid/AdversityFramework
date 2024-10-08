@@ -7,6 +7,12 @@ void Devices::Init()
 {
 	_lockableKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_Lockable");
 	_deviceKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_InventoryDevice");
+
+	_excludeKwds.push_back(_lockableKwd);
+	if (const auto& plugKwd = RE::TESForm::LookupByEditorID<RE::BGSKeyword>("zad_DeviousPlug")) {
+		_excludeKwds.push_back(plugKwd);
+	}
+
 	Devices::Load("default");
 }
 

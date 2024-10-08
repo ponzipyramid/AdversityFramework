@@ -124,7 +124,9 @@ bool Outfits::Validate(std::vector<std::string> a_ids)
 	}
 
 	const auto& active = Events::Filter([](Event* a_rule) { return a_rule->GetStatus() == Event::Status::Active; });
-	std::vector<RE::BGSKeyword*> allowedKwds{ Devices::GetLockableKwd() };
+
+	const auto& deviceKwds = Devices::GetExclKwds();
+	std::vector<RE::BGSKeyword*> allowedKwds{ deviceKwds.begin(), deviceKwds.end() };
 	allowedKwds.reserve(active.size() + 1);
 	
 	for (auto rule : active) {

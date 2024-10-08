@@ -408,7 +408,7 @@ namespace Adversity::Papyrus
 	{
 		const auto& active = Events::Filter([](Event* a_event) {
 			const auto status{ a_event->GetStatus() };
-			return status == Event::Status::Active || status == Event::Status::Reserved;
+			return status >= Event::Status::Active || status == Event::Status::Reserved;
 		});
 
 		const auto player = RE::PlayerCharacter::GetSingleton();
