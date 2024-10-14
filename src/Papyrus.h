@@ -342,9 +342,6 @@ namespace Adversity::Papyrus
 
 	bool SetEventStatus(RE::StaticFunctionTag*, std::string a_event, int a_status)
 	{
-		if (a_status > (int)Event::Status::Active)
-			return false;
-
 		if (auto ev = Events::GetById(a_event)) {
 
 			const auto status = (Event::Status)a_status;
@@ -416,17 +413,23 @@ namespace Adversity::Papyrus
 		const auto events{ Events::GetByIds(a_events) };
 		const auto filtered{
 			Events::Filter(events, [&active, &player, &a_target](Event* a_event) {
-				if (a_event->GetStatus() == Event::Status::Disabled)
+				if (a_event->GetStatus() == Event::Status::Disabled) {
+					logger::info("{} invalid due to disabled", a_event->GetId());
 					return false;
+				}
 
-				if (!a_event->ReqsMet())
+				if (!a_event->ReqsMet()) {
+					logger::info("{} invalid due to reqs not met", a_event->GetId());
 					return false;
+				}
 
 				if (!a_event->ConditionsMet(player, a_target)) {
+					logger::info("{} invalid due to conditions not met", a_event->GetId());
 					return false;
 				}
 
 				if (!Events::GetValue(a_event->GetId(), "enabled", true, true)) {
+					logger::info("{} invalid due to not enabled in persistent storage", a_event->GetId());
 					return false;
 				}
 
@@ -434,6 +437,7 @@ namespace Adversity::Papyrus
 
 				for (auto rule : active) {
 					if (rule->Conflicts(a_event) || rule->GetId() == a_event->GetId()) {
+						logger::info("{} invalid due to conflict with {}", a_event->GetId(), rule->GetId());
 						compatible = false;
 						break;
 					}

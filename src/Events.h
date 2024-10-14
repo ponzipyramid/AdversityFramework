@@ -34,7 +34,7 @@ namespace Adversity
 		static bool SetValue(std::string a_id, std::string a_key, T a_val, bool a_persist)
 		{
 			if (const auto& event = GetById(a_id)) {
-				if (const auto& data = GetContextData(event, a_persist)) {
+				if (const auto& data = GetContextData(event, a_persist, true)) {
 					data->SetValue<T>(a_key, a_val);
 					return true;
 				}
@@ -44,10 +44,10 @@ namespace Adversity
 		}
 
 	private:
-		static inline Meta* GetContextData(Event* a_event, bool a_persist)
+		static inline Meta* GetContextData(Event* a_event, bool a_persist, bool a_create = false)
 		{
 			if (const auto& context = Contexts::GetContext(a_event->GetContext(), a_persist)) {
-				if (const auto& meta = context->GetEventData(a_event->GetPackId(), a_event->GetName())) {
+				if (const auto& meta = context->GetEventData(a_event->GetPackId(), a_event->GetName(), a_create)) {
 					return meta;
 				}
 			}
