@@ -34,7 +34,6 @@ namespace Adversity
 			const auto id{ a_pack + "/" + a_name };
 
 			if (a_create) {
-				logger::info("creating");
 				_events[id];
 			}
 

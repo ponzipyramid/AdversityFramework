@@ -39,9 +39,13 @@ namespace Adversity
 
 		static inline std::vector<Trait*> GetTraits(std::string a_context, RE::Actor* a_actor)
 		{
+			std::vector<Trait*> traits;
+			
+			if (!a_actor)
+				return traits;
+
 			const auto ids = GetTraitIds(a_context, a_actor);
 
-			std::vector<Trait*> traits;
 
 			for (const auto& id : ids) {
 				traits.push_back(&_traits[a_context][id]);
@@ -70,6 +74,9 @@ namespace Adversity
 		template <typename T>
 		static inline T GetValue(std::string a_context, RE::Actor* a_actor, std::string a_key, T a_default)
 		{
+			if (!a_actor)
+				return a_default;
+
 			if (const auto& actor = GetActor(a_context, a_actor)) {
 				if (actor->HasValue<T>(a_key)) {
 					return actor->GetValue<T>(a_key, a_default);
@@ -136,6 +143,9 @@ namespace Adversity
 	private:
 		static inline Actor* GetActor(std::string a_context, RE::Actor* a_actor)
 		{
+			if (!a_actor)
+				return nullptr;
+
 			const auto formId = a_actor->GetFormID();
 
 			if (_actors[a_context].count(formId)) {
